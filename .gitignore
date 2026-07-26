@@ -1,0 +1,60 @@
+## .NET Build artifacts
+bin/
+obj/
+out/
+
+## Visual Studio / VS Code
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+.vscode/
+*.swp
+
+## NuGet packages
+*.nupkg
+*.snupkg
+**/[Pp]ackages/*
+*.lock.json
+!packages.lock.json
+
+## SQLite database files (data sensible, no se versiona)
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+
+## Published output
+publish/
+
+## Uploaded files (facturas, DNIs, etc.)
+src/MiniERP.API/wwwroot/uploads/
+
+## ASP.NET Scaffolding
+ScaffoldingReadMe.txt
+
+## Logs
+*.log
+logs/
+
+## OS generated files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+## Rider
+.idea/
+
+## Test Results
+TestResults/
+*.trx
+*.coveragexml
+coverage.xml
+
+## Environment / Secrets (NUNCA subir claves API reales)
+appsettings.*.json
+!appsettings.json
+secrets.json
+.env
