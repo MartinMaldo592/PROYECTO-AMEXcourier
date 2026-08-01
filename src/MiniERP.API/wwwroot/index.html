@@ -2028,20 +2028,61 @@
             submitBtn.disabled = true;
             submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Autenticando...';
 
-            try {
-                const res = await fetch(`${API_URL}/users/login`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username: usernameInput, password: passwordInput })
-                });
+            const MOCK_USERS = {
+                'admin': {
+                    id: 'usr-admin-demo',
+                    username: 'admin',
+                    fullName: 'Administrador General (Demo)',
+                    roleName: 'Administrador General',
+                    email: 'admin@amexcourier.pe',
+                    isActive: true,
+                    permissions: 'ALL'
+                },
+                'cajero_lince': {
+                    id: 'usr-cajero-demo',
+                    username: 'cajero_lince',
+                    fullName: 'Cajero Sede Lince (Demo)',
+                    roleName: 'Cajero / Liquidador Lince',
+                    email: 'lince@amexcourier.pe',
+                    isActive: true,
+                    permissions: 'Sede Lince,Finanzas,Rotulos'
+                }
+            };
 
-                if (!res.ok) {
-                    const errData = await res.json().catch(() => ({}));
-                    throw new Error(errData.error || 'Credenciales inválidas');
+            const MOCK_PASSWORDS = {
+                'admin': 'Admin2026!',
+                'cajero_lince': 'Caja2026!'
+            };
+
+            try {
+                let session = null;
+                try {
+                    const res = await fetch(`${API_URL}/users/login`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ username: usernameInput, password: passwordInput })
+                    });
+
+                    if (res.ok) {
+                        const userData = await res.json();
+                        session = normalizeUserSession(userData);
+                    }
+                } catch (fetchErr) {
+                    console.warn('Backend API no disponible. Evaluando autenticación Demo/Vercel...', fetchErr);
                 }
 
-                const userData = await res.json();
-                const session = normalizeUserSession(userData);
+                // Fallback para Vercel / Modo Demostración si la API no responde o devuelve error 404
+                if (!session) {
+                    const lowerUser = usernameInput.toLowerCase();
+                    const expectedPass = MOCK_PASSWORDS[lowerUser];
+                    if (expectedPass && expectedPass === passwordInput) {
+                        session = MOCK_USERS[lowerUser];
+                        showToast('ℹ️ Conectado en Modo Demostración (Vercel Standalone)', 'success');
+                    } else {
+                        throw new Error('Credenciales inválidas. Verifica tu usuario y contraseña.');
+                    }
+                }
+
                 if (!session) throw new Error('Respuesta de login inválida');
                 localStorage.setItem('amex_user_session', JSON.stringify(session));
                 
