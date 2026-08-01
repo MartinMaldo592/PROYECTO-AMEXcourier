@@ -1,6 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap');
 @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css');
-@import "tailwindcss";
 
 :root {
   --sap-shell-bg: #0f172a;
@@ -32,8 +31,8 @@
 }
 
 body {
-  background-color: var(--sap-bg);
-  color: var(--sap-text);
+  background-color: var(--sap-bg) !important;
+  color: var(--sap-text) !important;
   display: flex;
   flex-direction: column;
   height: 100vh;
@@ -171,7 +170,8 @@ body {
   flex: 1;
   padding: 24px 32px;
   overflow-y: auto;
-  background: var(--sap-bg);
+  background: var(--sap-bg) !important;
+  color: var(--sap-text) !important;
 }
 
 .sap-breadcrumb {
@@ -195,12 +195,12 @@ body {
 .page-title {
   font-size: 22px;
   font-weight: 800;
-  color: var(--sap-text);
+  color: var(--sap-text) !important;
 }
 
 .page-subtitle {
   font-size: 13px;
-  color: var(--sap-text-muted);
+  color: var(--sap-text-muted) !important;
   margin-top: 4px;
 }
 
@@ -213,7 +213,7 @@ body {
 }
 
 .kpi-card {
-  background: var(--sap-card-bg);
+  background: var(--sap-card-bg) !important;
   padding: 18px 20px;
   border-radius: var(--radius);
   box-shadow: var(--shadow-sm);
@@ -236,6 +236,7 @@ body {
   font-size: 24px;
   font-weight: 800;
   margin-top: 4px;
+  color: var(--sap-text) !important;
 }
 
 .kpi-icon {
@@ -280,7 +281,7 @@ body {
 
 /* Table Panels */
 .card-panel {
-  background: var(--sap-card-bg);
+  background: var(--sap-card-bg) !important;
   border-radius: var(--radius);
   box-shadow: var(--shadow-sm);
   border: 1px solid var(--sap-border);
@@ -298,11 +299,12 @@ table {
   border-collapse: collapse;
   text-align: left;
   font-size: 13.5px;
+  color: var(--sap-text) !important;
 }
 
 th {
-  background: #f1f5f9;
-  color: #475569;
+  background: #f1f5f9 !important;
+  color: #475569 !important;
   font-weight: 700;
   padding: 12px 18px;
   border-bottom: 1px solid var(--sap-border);
@@ -314,9 +316,10 @@ th {
 td {
   padding: 14px 18px;
   border-bottom: 1px solid var(--sap-border);
+  color: #0f172a !important;
 }
 
-tr:hover { background: #f8fafc; }
+tr:hover { background: #f8fafc !important; }
 
 .badge {
   display: inline-flex;
@@ -334,12 +337,86 @@ tr:hover { background: #f8fafc; }
 .badge-paid-pen { background: #d1fae5; color: #047857; font-weight: 700; }
 .badge-paid-usd { background: #dbeafe; color: #1d4ed8; font-weight: 700; }
 .badge-unpaid { background: #fee2e2; color: #b91c1c; font-weight: 700; }
-.badge-active { background: #dcfce7; color: #15803d; font-weight: 700; }
-.badge-inactive { background: #fee2e2; color: #b91c1c; font-weight: 700; }
-.badge-role { background: #f3e8ff; color: #6b21a8; font-weight: 800; }
 
-@media print {
-  body * { visibility: hidden !important; }
-  .printable-area, .printable-area * { visibility: visible !important; }
-  .printable-area { position: absolute !important; left: 0 !important; top: 0 !important; width: 100% !important; display: flex !important; justify-content: center !important; }
+.search-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #ffffff;
+  border: 1px solid var(--sap-border);
+  border-radius: 6px;
+  padding: 4px 12px;
+  min-width: 220px;
+  transition: all 0.2s;
+}
+
+.search-bar:focus-within {
+  border-color: var(--sap-primary);
+  box-shadow: 0 0 0 3px rgba(0,112,242,0.1);
+}
+
+.search-bar input {
+  border: none;
+  outline: none;
+  font-size: 13px;
+  padding: 6px 0;
+  width: 100%;
+  background: transparent;
+  color: #0f172a;
+}
+
+/* Modals & Overlays */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(17, 30, 46, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 16px;
+}
+
+.modal-content {
+  background: #ffffff;
+  width: 100%;
+  max-width: 680px;
+  max-height: 90vh;
+  border-radius: 10px;
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+  border: 1px solid var(--sap-border);
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-header {
+  background: #f8fafc;
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--sap-border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.modal-body {
+  padding: 24px;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+}
+
+.modal-footer {
+  padding: 16px 24px;
+  background: #f8fafc;
+  border-top: 1px solid var(--sap-border);
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  flex-shrink: 0;
 }
