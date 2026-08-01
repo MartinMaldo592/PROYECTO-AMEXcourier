@@ -1,26 +1,345 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap');
+@import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css');
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --sap-shell-bg: #0f172a;
+  --sap-sidebar-bg: #1e293b;
+  --sap-sidebar-hover: #334155;
+  --sap-sidebar-active: #2563eb;
+  --sap-primary: #2563eb;
+  --sap-primary-hover: #1d4ed8;
+  --sap-accent: #38bdf8;
+  --sap-bg: #f8fafc;
+  --sap-card-bg: #ffffff;
+  --sap-text: #0f172a;
+  --sap-text-muted: #64748b;
+  --sap-border: #e2e8f0;
+  --sap-success: #059669;
+  --sap-warning: #d97706;
+  --sap-danger: #dc2626;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.05);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.06);
+  --shadow-lg: 0 10px 25px rgba(0,0,0,0.08);
+  --radius: 8px;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: 'Inter', system-ui, sans-serif;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--sap-bg);
+  color: var(--sap-text);
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* Header Bar */
+.sap-header {
+  background: var(--sap-shell-bg);
+  color: #ffffff;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  z-index: 100;
+  border-bottom: 2px solid var(--sap-primary);
+}
+
+.sap-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-weight: 700;
+  font-size: 18px;
+  letter-spacing: 0.3px;
+}
+
+.sap-logo-badge {
+  background: #0070f2;
+  color: #ffffff;
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-weight: 800;
+}
+
+.sap-sys-badge {
+  background: rgba(16, 126, 62, 0.2);
+  color: #4ade80;
+  font-size: 12px;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-weight: 700;
+  border: 1px solid rgba(74,222,128,0.3);
+}
+
+/* Main Container & Accordion Sidebar */
+.app-container {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+.sap-sidebar {
+  width: 280px;
+  background: var(--sap-sidebar-bg);
+  display: flex;
+  flex-direction: column;
+  padding: 14px 12px;
+  gap: 6px;
+  overflow-y: auto;
+  transition: all 0.25s ease-in-out;
+}
+
+.sap-sidebar.collapsed {
+  width: 0;
+  padding: 0;
+  margin: 0;
+  overflow: hidden;
+  border: none;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.sap-module-group {
+  margin-bottom: 6px;
+}
+
+.sap-module-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  color: #94a3b8;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.sap-module-header:hover {
+  background: var(--sap-sidebar-hover);
+  color: #ffffff;
+}
+
+.sap-sub-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-left: 8px;
+  margin-top: 2px;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  padding: 10px 14px;
+  color: #cbd5e1;
+  border-radius: 6px;
+  font-size: 13.5px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.nav-item:hover {
+  background: var(--sap-sidebar-hover);
+  color: #ffffff;
+}
+
+.nav-item.active {
+  background: var(--sap-primary);
+  color: #ffffff;
+  font-weight: 600;
+  box-shadow: 0 4px 10px rgba(0, 112, 242, 0.4);
+}
+
+/* Main Workspace Content */
+.main-content {
+  flex: 1;
+  padding: 24px 32px;
+  overflow-y: auto;
+  background: var(--sap-bg);
+}
+
+.sap-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--sap-text-muted);
+  margin-bottom: 8px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.page-title-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.page-title {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--sap-text);
+}
+
+.page-subtitle {
+  font-size: 13px;
+  color: var(--sap-text-muted);
+  margin-top: 4px;
+}
+
+/* KPI Tiles */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 18px;
+  margin-bottom: 28px;
+}
+
+.kpi-card {
+  background: var(--sap-card-bg);
+  padding: 18px 20px;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--sap-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-left: 4px solid var(--sap-primary);
+}
+
+.kpi-info h4 {
+  font-size: 11px;
+  color: var(--sap-text-muted);
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.kpi-info .kpi-value {
+  font-size: 24px;
+  font-weight: 800;
+  margin-top: 4px;
+}
+
+.kpi-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+}
+
+.kpi-icon.blue { background: #e0f2fe; color: #0284c7; }
+.kpi-icon.amber { background: #fef3c7; color: #d97706; }
+.kpi-icon.purple { background: #f3e8ff; color: #9333ea; }
+.kpi-icon.green { background: #d1fae5; color: #059669; }
+
+/* Buttons & Controls */
+.btn {
+  padding: 9px 16px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s;
+}
+
+.btn-primary { background: var(--sap-primary); color: #ffffff; }
+.btn-primary:hover { background: var(--sap-primary-hover); box-shadow: 0 4px 10px rgba(0, 112, 242, 0.3); }
+.btn-secondary { background: #e2e8f0; color: #334155; }
+.btn-secondary:hover { background: #cbd5e1; }
+.btn-success { background: var(--sap-success); color: #ffffff; }
+.btn-success:hover { background: #0b6732; }
+.btn-warning { background: var(--sap-warning); color: #ffffff; }
+.btn-warning:hover { background: #c86005; }
+.btn-car { background: #8b5cf6; color: #ffffff; }
+.btn-car:hover { background: #7c3aed; }
+
+/* Table Panels */
+.card-panel {
+  background: var(--sap-card-bg);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--sap-border);
+  overflow: hidden;
+  margin-bottom: 24px;
+}
+
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 13.5px;
+}
+
+th {
+  background: #f1f5f9;
+  color: #475569;
+  font-weight: 700;
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--sap-border);
+  text-transform: uppercase;
+  font-size: 11.5px;
+  letter-spacing: 0.5px;
+}
+
+td {
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--sap-border);
+}
+
+tr:hover { background: #f8fafc; }
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 11.5px;
+  font-weight: 700;
+}
+
+.badge-pdf { background: #fee2e2; color: #dc2626; text-decoration: none; cursor: pointer; font-weight: 700; }
+.badge-wr { background: #e0f2fe; color: #0369a1; font-family: 'JetBrains Mono', monospace; font-weight: 800; }
+.badge-type { background: #f1f5f9; color: #334155; font-weight: 700; }
+.badge-paid-pen { background: #d1fae5; color: #047857; font-weight: 700; }
+.badge-paid-usd { background: #dbeafe; color: #1d4ed8; font-weight: 700; }
+.badge-unpaid { background: #fee2e2; color: #b91c1c; font-weight: 700; }
+.badge-active { background: #dcfce7; color: #15803d; font-weight: 700; }
+.badge-inactive { background: #fee2e2; color: #b91c1c; font-weight: 700; }
+.badge-role { background: #f3e8ff; color: #6b21a8; font-weight: 800; }
+
+@media print {
+  body * { visibility: hidden !important; }
+  .printable-area, .printable-area * { visibility: visible !important; }
+  .printable-area { position: absolute !important; left: 0 !important; top: 0 !important; width: 100% !important; display: flex !important; justify-content: center !important; }
 }
