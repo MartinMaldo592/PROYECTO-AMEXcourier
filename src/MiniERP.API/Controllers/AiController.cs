@@ -12,8 +12,8 @@ namespace MiniERP.API.Controllers;
 [Route("api/v1/ai")]
 public class AiController : ControllerBase
 {
-    private const string GeminiModel = "gemini-2.0-flash-lite";
-    private const string GeminiEndpoint = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent";
+    private const string GeminiModel = "gemini-3.5-flash-lite";
+    private const string GeminiEndpoint = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent";
 
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly ILogger<AiController> _logger;

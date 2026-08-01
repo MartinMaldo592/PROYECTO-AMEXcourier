@@ -5,6 +5,14 @@
 # Uso: Ejecutar desde la raíz del repositorio en PowerShell como Administrador
 # =============================================================================
 
+# Asegurar que dotnet esté en el PATH
+if (!(Get-Command dotnet -ErrorAction SilentlyContinue)) {
+    $localDotnet = "$env:USERPROFILE\AppData\Local\Microsoft\dotnet"
+    if (Test-Path "$localDotnet\dotnet.exe") {
+        $env:PATH = "$localDotnet;" + $env:PATH
+    }
+}
+
 $env:ASPNETCORE_URLS = "http://localhost:5000"
 $env:ASPNETCORE_ENVIRONMENT = "Development"
 

@@ -12,6 +12,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- SheetJS (xlsx) for Excel Exports -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <!-- HTML5 QRCode Scanner Library for Mobile Devices -->
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
     <style>
         @media print {
             body * { visibility: hidden !important; }
@@ -57,7 +59,8 @@
 
         /* Main Container & Accordion Sidebar */
         .app-container { display: flex; flex: 1; overflow: hidden; }
-        .sap-sidebar { width: 280px; background: var(--sap-sidebar-bg); display: flex; flex-direction: column; padding: 14px 12px; gap: 6px; overflow-y: auto; }
+        .sap-sidebar { width: 280px; background: var(--sap-sidebar-bg); display: flex; flex-direction: column; padding: 14px 12px; gap: 6px; overflow-y: auto; transition: all 0.25s ease-in-out; }
+        .sap-sidebar.collapsed { width: 0; padding: 0; margin: 0; overflow: hidden; border: none; opacity: 0; pointer-events: none; }
         
         .sap-module-group { margin-bottom: 6px; }
         .sap-module-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; color: #94a3b8; border-radius: 6px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; cursor: pointer; transition: all 0.2s; }
@@ -141,16 +144,30 @@
         .form-control { width: 100%; padding: 9px 12px; border-radius: 6px; border: 1px solid var(--sap-border); font-size: 13.5px; outline: none; transition: all 0.2s; }
         .form-control:focus { border-color: var(--sap-primary); box-shadow: 0 0 0 3px rgba(0, 112, 242, 0.15); }
 
+        .search-bar { display: flex; align-items: center; gap: 8px; background: #ffffff; border: 1px solid var(--sap-border); border-radius: 6px; padding: 4px 12px; min-width: 220px; transition: all 0.2s; }
+        .search-bar:focus-within { border-color: var(--sap-primary); box-shadow: 0 0 0 3px rgba(0,112,242,0.1); }
+        .search-bar i { color: #94a3b8; font-size: 14px; }
+        .search-bar input { border: none; outline: none; font-size: 13px; padding: 6px 0; width: 100%; background: transparent; }
+        .search-bar input::placeholder { color: #94a3b8; }
         .perm-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; background: #f8fafc; padding: 14px; border-radius: 8px; border: 1px solid var(--sap-border); }
         .perm-item { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: #334155; }
 
         /* Modals & Overlays */
-        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(17, 30, 46, 0.6); backdrop-filter: blur(4px); display: none; align-items: center; justify-content: center; z-index: 1000; }
+        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(17, 30, 46, 0.6); backdrop-filter: blur(4px); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 16px; }
         .modal-overlay.active { display: flex; }
-        .modal-content { background: #ffffff; width: 100%; max-width: 680px; border-radius: 10px; box-shadow: var(--shadow-lg); overflow: hidden; border: 1px solid var(--sap-border); }
-        .modal-header { background: #f8fafc; padding: 16px 24px; border-bottom: 1px solid var(--sap-border); display: flex; justify-content: space-between; align-items: center; }
-        .modal-body { padding: 24px; max-height: 80vh; overflow-y: auto; }
-        .modal-footer { padding: 16px 24px; background: #f8fafc; border-top: 1px solid var(--sap-border); display: flex; justify-content: flex-end; gap: 12px; }
+        .modal-content { background: #ffffff; width: 100%; max-width: 680px; max-height: 90vh; border-radius: 10px; box-shadow: var(--shadow-lg); overflow: hidden; border: 1px solid var(--sap-border); display: flex; flex-direction: column; }
+        .modal-content.split { max-width: 95vw; width: 95vw; height: 90vh; max-height: 95vh; }
+        .modal-split-body { display: flex; gap: 0; flex: 1; min-height: 0; overflow: hidden; }
+        .modal-split-left { flex: 1.2; border-right: 1px solid var(--sap-border); padding: 16px; display: flex; flex-direction: column; background: #f8fafc; min-width: 0; height: 100%; }
+        .modal-split-left.hidden { display: none; }
+        .modal-split-right { flex: 1; padding: 24px; overflow-y: auto; height: 100%; }
+        .modal-preview-header { font-size: 12px; font-weight: 700; color: #475569; text-transform: uppercase; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+        .modal-preview-frame { flex: 1; border: 1px solid var(--sap-border); border-radius: 6px; background: #ffffff; overflow: hidden; display: flex; flex-direction: column; min-height: 0; }
+        .modal-preview-frame iframe, .modal-preview-frame embed { width: 100%; height: 100%; border: none; flex: 1; }
+        .modal-preview-placeholder { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: #94a3b8; gap: 12px; font-size: 14px; }
+        .modal-header { background: #f8fafc; padding: 16px 24px; border-bottom: 1px solid var(--sap-border); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        .modal-body { padding: 24px; overflow-y: auto; flex: 1; min-height: 0; }
+        .modal-footer { padding: 16px 24px; background: #f8fafc; border-top: 1px solid var(--sap-border); display: flex; justify-content: flex-end; gap: 12px; flex-shrink: 0; }
 
         .toast-container { position: fixed; bottom: 24px; right: 24px; z-index: 2000; display: flex; flex-direction: column; gap: 10px; }
         .toast { background: #111e2e; color: #ffffff; padding: 14px 20px; border-radius: 8px; box-shadow: var(--shadow-lg); display: flex; align-items: center; gap: 12px; font-size: 13.5px; }
@@ -232,6 +249,9 @@
     <!-- Header Bar -->
     <header class="sap-header">
         <div class="sap-brand">
+            <button onclick="toggleSidebar()" class="btn-toggle-sidebar" style="background: rgba(255,255,255,0.1); border: none; color: white; cursor: pointer; font-size: 16px; width: 32px; height: 32px; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; margin-right: 4px; transition: all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.2)'" onmouseout="this.style.background='rgba(255,255,255,0.1)'">
+                <i class="fa-solid fa-bars"></i>
+            </button>
             <span class="sap-logo-badge">ERP</span>
             <span>Amex Courier | Sistema Logístico Integrado</span>
         </div>
@@ -303,6 +323,9 @@
                     <div class="nav-item" data-perm="Guías Máster" onclick="switchTab('mm-master-guides', this)">
                         <div class="nav-item-left"><i class="fa-solid fa-file-contract"></i> Guías Máster (AMX0000001269)</div>
                     </div>
+                    <div class="nav-item" data-perm="Bodega Miami" onclick="switchTab('mobile-scanner', this)">
+                        <div class="nav-item-left"><i class="fa-solid fa-qrcode" style="color: #38bdf8;"></i> 📱 Escáner Móvil QR & Barras</div>
+                    </div>
                 </div>
             </div>
 
@@ -355,6 +378,112 @@
 
         <!-- Main Workspace View Tabs -->
         <main class="main-content">
+
+            <!-- TAB: MOBILE SCANNER (QR & BARCODES) -->
+            <div id="tab-mobile-scanner" class="view-tab">
+                <div class="sap-breadcrumb">
+                    <span>Operaciones y Almacenes</span> / <span>Escáner Móvil QR & Barras</span>
+                </div>
+                <div class="page-title-bar">
+                    <div>
+                        <h1 class="page-title"><i class="fa-solid fa-qrcode" style="color: #2563eb;"></i> Módulo de Escaneo Móvil en Tiempo Real</h1>
+                        <p class="page-subtitle">Lectura ultrarrápida de códigos de barra (Code 128, EAN, UPC) y QR para teléfonos celulares y tablets</p>
+                    </div>
+                </div>
+
+                <!-- Live Camera & Control Grid -->
+                <div style="display: grid; grid-template-columns: minmax(320px, 480px) 1fr; gap: 24px; margin-bottom: 24px; align-items: start;">
+                    <!-- Card 1: Camera Scanner Viewfinder -->
+                    <div class="card-panel" style="padding: 20px;">
+                        <h3 style="margin-bottom: 14px; font-size: 16px; display: flex; justify-content: space-between; align-items: center;">
+                            <span><i class="fa-solid fa-camera" style="color: #0284c7;"></i> Visor de Cámara Móvil</span>
+                            <span id="scanner-status-badge" class="badge" style="background: #e2e8f0; color: #475569; font-size: 11px;">Inactivo</span>
+                        </h3>
+
+                        <!-- Camera Viewport Box -->
+                        <div id="mobile-scanner-wrapper" style="width: 100%; position: relative; background: #090d16; border-radius: 12px; overflow: hidden; min-height: 280px; display: flex; flex-direction: column; align-items: center; justify-content: center; border: 2px solid #1e293b;">
+                            <div id="mobile-qr-reader" style="width: 100%;"></div>
+                            <div id="scanner-placeholder" style="padding: 40px 20px; text-align: center; color: #94a3b8;">
+                                <i class="fa-solid fa-barcode" style="font-size: 48px; color: #38bdf8; margin-bottom: 12px; display: block;"></i>
+                                <p style="font-size: 14px; font-weight: 600; color: #f8fafc;">Cámara Apagada</p>
+                                <p style="font-size: 12px; margin-top: 4px;">Presiona "Activar Cámara" para iniciar la lectura nativa desde tu móvil</p>
+                            </div>
+                        </div>
+
+                        <!-- Scanner Controls -->
+                        <div style="margin-top: 16px; display: flex; flex-direction: column; gap: 10px;">
+                            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                                <button id="btn-start-scanner" class="btn btn-primary" style="flex: 1; padding: 12px;" onclick="startMobileScanner()">
+                                    <i class="fa-solid fa-camera"></i> Activar Cámara
+                                </button>
+                                <button id="btn-stop-scanner" class="btn btn-danger" style="flex: 1; padding: 12px; display: none;" onclick="stopMobileScanner()">
+                                    <i class="fa-solid fa-video-slash"></i> Detener Cámara
+                                </button>
+                            </div>
+
+                            <div class="form-group" id="camera-select-group" style="display: none; margin-bottom: 0;">
+                                <label class="form-label" style="font-size: 12px;">Seleccionar Cámara del Dispositivo:</label>
+                                <select id="scanner-camera-select" class="form-control" onchange="changeScannerCamera(this.value)"></select>
+                            </div>
+
+                            <!-- Manual Code Test Simulator -->
+                            <div style="border-top: 1px solid var(--sap-border); padding-top: 12px; margin-top: 4px;">
+                                <label class="form-label" style="font-size: 12px; font-weight: 600; color: var(--sap-text-muted);">
+                                    <i class="fa-solid fa-keyboard"></i> Simular Lectura / Prueba Manual:
+                                </label>
+                                <div style="display: flex; gap: 8px;">
+                                    <input type="text" id="manual-scan-input" class="form-control" placeholder="Ej: 1Z9999999999999 o AMX-0082" onkeypress="if(event.key==='Enter') processManualScan()">
+                                    <button class="btn btn-secondary" onclick="processManualScan()"><i class="fa-solid fa-barcode"></i> Probar</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Card 2: Live Results & Package Verification -->
+                    <div>
+                        <!-- Recent Match Card -->
+                        <div class="card-panel" style="padding: 20px; margin-bottom: 16px; background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); color: white;">
+                            <h3 style="font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px; color: #94a3b8; margin-bottom: 12px;">
+                                <i class="fa-solid fa-bullseye" style="color: #4ade80;"></i> Última Lectura Detectada
+                            </h3>
+                            <div id="scanner-last-result-box" style="padding: 16px; background: rgba(255,255,255,0.05); border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);">
+                                <div style="font-size: 13px; color: #cbd5e1; margin-bottom: 4px;">Esperando primera lectura de código...</div>
+                                <div id="last-code-val" style="font-family: 'JetBrains Mono', monospace; font-size: 22px; font-weight: 700; color: #38bdf8; word-break: break-all;">- - -</div>
+                                <div id="last-code-meta" style="font-size: 12px; color: #94a3b8; margin-top: 6px; display: flex; gap: 16px;">
+                                    <span>Formato: <strong id="last-code-fmt" style="color: white;">-</strong></span>
+                                    <span>Hora: <strong id="last-code-time" style="color: white;">-</strong></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Scan History Table -->
+                        <div class="card-panel" style="padding: 20px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                                <h3 style="font-size: 15px;"><i class="fa-solid fa-clock-rotate-left"></i> Historial de Escaneos de la Sesión</h3>
+                                <button class="btn btn-secondary" style="padding: 4px 10px; font-size: 11px;" onclick="clearScanLogs()"><i class="fa-solid fa-trash"></i> Limpiar</button>
+                            </div>
+                            <div class="table-responsive">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Hora</th>
+                                            <th>Código Escaneado</th>
+                                            <th>Tipo Código</th>
+                                            <th>Estado en ERP</th>
+                                            <th>Acción</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="table-scanner-logs-body">
+                                        <tr>
+                                            <td colspan="5" style="text-align: center; color: var(--sap-text-muted); padding: 20px;">No se han realizado lecturas aún. Enciende la cámara para escanear.</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
             <!-- TAB 1: DASHBOARD -->
             <div id="tab-dashboard" class="view-tab active">
@@ -428,7 +557,8 @@
                         <h1 class="page-title">Directorio de Casilleros e Importadores</h1>
                         <p class="page-subtitle">Base de datos de casilleros `AMEX-PER-XXXX` con datos fiscales y de despacho</p>
                     </div>
-                    <div style="display: flex; gap: 8px;">
+                    <div style="display: flex; gap: 8px; align-items: center;">
+                        <div class="search-bar"><i class="fa-solid fa-search"></i><input type="text" id="search-customers" placeholder="Buscar casillero, nombre, DNI..." oninput="renderCustomers()"></div>
                         <button class="btn btn-secondary" onclick="exportSelectedOrAllToExcel('customers')">
                             <i class="fa-solid fa-file-excel" style="color: #16a34a;"></i> Exportar XLSX
                         </button>
@@ -470,6 +600,7 @@
                         <h1 class="page-title">Gestión de Expedientes Digitales de DNI</h1>
                         <p class="page-subtitle">Verificación de copias digitalizadas de DNI (Anverso y Reverso) de importadores</p>
                     </div>
+                    <div class="search-bar"><i class="fa-solid fa-search"></i><input type="text" id="search-dni" placeholder="Buscar casillero, nombre, DNI..." oninput="renderDniMasterTable()"></div>
                 </div>
 
                 <div class="card-panel">
@@ -501,7 +632,8 @@
                         <h1 class="page-title">1. Almacén Tib Courier (Miami, USA)</h1>
                         <p class="page-subtitle">Ingesta de compras con Guía WR#, Tipo Empaque, Invoices PDF y Multi-DNI Consignatarios</p>
                     </div>
-                    <div style="display: flex; gap: 8px;">
+                    <div style="display: flex; gap: 8px; align-items: center;">
+                        <div class="search-bar"><i class="fa-solid fa-search"></i><input type="text" id="search-miami" placeholder="Buscar tracking, WR#, casillero..." oninput="renderMiamiPackages()"></div>
                         <button class="btn btn-secondary" onclick="exportSelectedOrAllToExcel('miami')">
                             <i class="fa-solid fa-file-excel" style="color: #16a34a;"></i> Exportar XLSX
                         </button>
@@ -527,6 +659,7 @@
                                     <th>Empaque</th>
                                     <th>Invoice #</th>
                                     <th>Casillero</th>
+                                    <th>Consignatario</th>
                                     <th>DNI Consignatario SUNAT</th>
                                     <th>Descripción</th>
                                     <th>Peso (Kg)</th>
@@ -552,7 +685,8 @@
                         <h1 class="page-title">2. Almacén Tib Courier (Tingo María - Cercado de Lima)</h1>
                         <p class="page-subtitle">Desaduanaje SUNAT por DNI y transferencia inter-almacén hacia la Sede Amex Lince</p>
                     </div>
-                    <div style="display: flex; gap: 8px;">
+                    <div style="display: flex; gap: 8px; align-items: center;">
+                        <div class="search-bar"><i class="fa-solid fa-search"></i><input type="text" id="search-tingo" placeholder="Buscar tracking, WR#, casillero..." oninput="renderTingoPackages()"></div>
                         <button class="btn btn-secondary" onclick="exportSelectedOrAllToExcel('tingo')">
                             <i class="fa-solid fa-file-excel" style="color: #16a34a;"></i> Exportar XLSX
                         </button>
@@ -584,6 +718,7 @@
                                     <th>Empaque</th>
                                     <th>Invoice #</th>
                                     <th>Casillero</th>
+                                    <th>Consignatario</th>
                                     <th>DNI Consignatario SUNAT</th>
                                     <th>Peso (Kg)</th>
                                     <th>Visor de DNI</th>
@@ -607,7 +742,8 @@
                         <h1 class="page-title">3. Almacén Central Amex Courier (Lince, Lima)</h1>
                         <p class="page-subtitle">Almacén de distribución final, control de custodia y despacho de cargas</p>
                     </div>
-                    <div style="display: flex; gap: 8px;">
+                    <div style="display: flex; gap: 8px; align-items: center;">
+                        <div class="search-bar"><i class="fa-solid fa-search"></i><input type="text" id="search-lince" placeholder="Buscar WR#, tracking, casillero..." oninput="renderLincePackages()"></div>
                         <button class="btn btn-secondary" onclick="exportSelectedOrAllToExcel('lince')">
                             <i class="fa-solid fa-file-excel" style="color: #16a34a;"></i> Exportar XLSX
                         </button>
@@ -628,6 +764,7 @@
                                     <th>Hora</th>
                                     <th>Guía WR #</th>
                                     <th>Casillero</th>
+                                    <th>Consignatario</th>
                                     <th>Invoice #</th>
                                     <th>Tracking USA</th>
                                     <th>DNI Consignatario SUNAT</th>
@@ -641,6 +778,7 @@
                         </table>
                 </div>
             </div>
+            </div>
 
             <!-- TAB 6.5: GUÍAS MÁSTER AMEX -->
             <div id="tab-mm-master-guides" class="view-tab">
@@ -652,7 +790,8 @@
                         <h1 class="page-title">Guías Máster y Manifiestos de Ingesta (AMX0000001269)</h1>
                         <p class="page-subtitle">Control de sacas y lotes de carga enviados por el partner Tib Courier desde Miami hacia Perú</p>
                     </div>
-                    <div style="display: flex; gap: 8px;">
+                    <div style="display: flex; gap: 8px; align-items: center;">
+                        <div class="search-bar"><i class="fa-solid fa-search"></i><input type="text" id="search-shipments" placeholder="Buscar guía, referencia..." oninput="renderShipmentsTable()"></div>
                         <button class="btn btn-primary" onclick="openCreateShipmentModal()">
                             <i class="fa-solid fa-plus"></i> + Crear Guía Máster (AMX)
                         </button>
@@ -692,7 +831,8 @@
                         <h1 class="page-title">Control de Reparto a Domicilio (Carro Amex vs Lince)</h1>
                         <p class="page-subtitle">Monitoreo de entregas en vehículo propio de Amex, recojo en tienda o envíos por agencia</p>
                     </div>
-                    <div style="display: flex; gap: 8px;">
+                    <div style="display: flex; gap: 8px; align-items: center;">
+                        <div class="search-bar"><i class="fa-solid fa-search"></i><input type="text" id="search-deliveries" placeholder="Buscar cliente, WR#, dirección..." oninput="renderDeliveriesTable(currentDeliveryFilter || 'ALL')"></div>
                         <button class="btn btn-secondary" onclick="exportSelectedOrAllToExcel('deliveries')">
                             <i class="fa-solid fa-file-excel" style="color: #16a34a;"></i> Exportar XLSX
                         </button>
@@ -743,7 +883,8 @@
                         <h1 class="page-title">Módulo de Etiquetado Térmico para Agencias Nacionales</h1>
                         <p class="page-subtitle">Impresión directa de rótulos pre-rotulados (Shalom, Olva Courier, Cruz del Sur)</p>
                     </div>
-                    <div style="display: flex; gap: 8px;">
+                    <div style="display: flex; gap: 8px; align-items: center;">
+                        <div class="search-bar"><i class="fa-solid fa-search"></i><input type="text" id="search-labels" placeholder="Buscar WR#, casillero, agencia..." oninput="renderShpLabels()"></div>
                         <button class="btn btn-secondary" onclick="exportSelectedOrAllToExcel('labels')">
                             <i class="fa-solid fa-file-excel" style="color: #16a34a;"></i> Exportar XLSX
                         </button>
@@ -786,6 +927,7 @@
                         <h1 class="page-title">Liquidación Financiera de Importaciones & Cobranzas</h1>
                         <p class="page-subtitle">Cobranzas en Soles/Dólares (Yape, BCP) y margen de ganancia frente a costos 3PL Tib Courier</p>
                     </div>
+                    <div class="search-bar"><i class="fa-solid fa-search"></i><input type="text" id="search-orders" placeholder="Buscar WR#, casillero, cliente..." oninput="renderOrders()"></div>
                 </div>
 
                 <div style="display: grid; grid-template-columns: 1fr 420px; gap: 24px; margin-bottom: 24px;">
@@ -1339,82 +1481,106 @@
 
     <!-- MODAL: RECEPCIONAR PAQUETE EN MIAMI -->
     <div id="modal-package" class="modal-overlay">
-        <div class="modal-content">
+        <div class="modal-content" id="modal-package-content">
             <div class="modal-header">
                 <h3><i class="fa-solid fa-box-open"></i> Ingesta Paquete Miami (Formato Tib Courier)</h3>
                 <i class="fa-solid fa-xmark" style="cursor: pointer;" onclick="closeModal('modal-package')"></i>
             </div>
-            <div class="modal-body">
-                <form id="form-package" onsubmit="handleReceivePackage(event)">
-                    <div class="form-group">
-                        <label class="form-label">Seleccionar Casillero Importador (`AMEX-PER`)</label>
-                        <select id="pack-locker-select" class="form-control" required></select>
+            <div class="modal-split-body">
+                <div id="modal-package-preview" class="modal-split-left hidden">
+                    <div class="modal-preview-header">
+                        <i class="fa-solid fa-file-pdf" style="color:#dc2626;"></i> Vista Previa de Factura
                     </div>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    <div class="modal-preview-frame" id="modal-package-preview-frame">
+                        <div class="modal-preview-placeholder">
+                            <i class="fa-solid fa-file-import" style="font-size: 40px;"></i>
+                            <span>Selecciona un PDF para previsualizarlo</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-split-right">
+                    <form id="form-package" onsubmit="handleReceivePackage(event)">
                         <div class="form-group">
-                            <label class="form-label">Guía / Recibo Bodega Tib (WR #)</label>
-                            <input type="text" id="pack-wr" class="form-control" placeholder="Ej: WR000434345 (Opcional)">
+                            <label class="form-label" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                                <span>Seleccionar Casillero Importador (`AMEX-PER`)</span>
+                            </label>
+                            <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                                <div class="search-bar" style="flex: 1; padding: 4px 10px; border-radius: 6px; border: 1px solid var(--sap-border); display: flex; align-items: center; background: #f8fafc; min-width: 0;">
+                                    <i class="fa-solid fa-search" style="font-size: 12px; color: #94a3b8; margin-right: 8px;"></i>
+                                    <input type="text" id="locker-search-input" placeholder="Buscar por nombre o casillero..." oninput="filterLockerSelect()" style="width: 100%; border: none; outline: none; font-size: 13px; background: transparent;">
+                                </div>
+                            </div>
+                            <select id="pack-locker-select" class="form-control" required></select>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                            <div class="form-group">
+                                <label class="form-label">Guía / Recibo Bodega Tib (WR #)</label>
+                                <input type="text" id="pack-wr" class="form-control" placeholder="Ej: WR000434345 (Opcional)">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Tracking USA Origen (Amazon / UPS)</label>
+                                <input type="text" id="pack-tracking" class="form-control" placeholder="Ej: TBA332967479461" required>
+                            </div>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                            <div class="form-group">
+                                <label class="form-label">Tipo de Empaque</label>
+                                <select id="pack-type" class="form-control">
+                                    <option value="CAJA">📦 CAJA</option>
+                                    <option value="SOBRE">✉️ SOBRE</option>
+                                    <option value="BOLSA">🛍️ BOLSA</option>
+                                    <option value="PALLET">🏗️ PALLET</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Invoice / Factura USA # <span id="ai-badge-invoice" style="display:none; background:#7c3aed; color:#fff; font-size:10px; padding:2px 7px; border-radius:20px; margin-left:6px;">✨ IA</span></label>
+                                <input type="text" id="pack-invoice" class="form-control" placeholder="Ej: INV-8891" required>
+                            </div>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; background: #f0f9ff; padding: 12px; border-radius: 8px; border: 1px solid #bae6fd; margin-bottom: 16px;">
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label class="form-label" style="color: #0369a1;">DNI Consignatario SUNAT</label>
+                                <input type="text" id="pack-customs-dni" class="form-control" placeholder="Ej: 72819204" required>
+                            </div>
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label class="form-label" style="color: #0369a1;">Nombre Titular DNI SUNAT</label>
+                                <input type="text" id="pack-customs-name" class="form-control" placeholder="Ej: Juan Perez Perez" required>
+                            </div>
                         </div>
                         <div class="form-group">
-                            <label class="form-label">Tracking USA Origen (Amazon / UPS)</label>
-                            <input type="text" id="pack-tracking" class="form-control" placeholder="Ej: TBA332967479461" required>
-                        </div>
-                    </div>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-                        <div class="form-group">
-                            <label class="form-label">Tipo de Empaque</label>
-                            <select id="pack-type" class="form-control">
-                                <option value="CAJA">📦 CAJA</option>
-                                <option value="SOBRE">✉️ SOBRE</option>
-                                <option value="BOLSA">🛍️ BOLSA</option>
-                                <option value="PALLET">🏗️ PALLET</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Invoice / Factura USA # <span id="ai-badge-invoice" style="display:none; background:#7c3aed; color:#fff; font-size:10px; padding:2px 7px; border-radius:20px; margin-left:6px;">✨ IA</span></label>
-                            <input type="text" id="pack-invoice" class="form-control" placeholder="Ej: INV-8891" required>
-                        </div>
-                    </div>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; background: #f0f9ff; padding: 12px; border-radius: 8px; border: 1px solid #bae6fd; margin-bottom: 16px;">
-                        <div class="form-group" style="margin-bottom: 0;">
-                            <label class="form-label" style="color: #0369a1;">DNI Consignatario SUNAT</label>
-                            <input type="text" id="pack-customs-dni" class="form-control" placeholder="Ej: 72819204" required>
-                        </div>
-                        <div class="form-group" style="margin-bottom: 0;">
-                            <label class="form-label" style="color: #0369a1;">Nombre Titular DNI SUNAT</label>
-                            <input type="text" id="pack-customs-name" class="form-control" placeholder="Ej: Juan Perez Perez" required>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">📄 Factura / Invoice USA Adjunta (PDF / Imagen)</label>
-                        <input type="file" id="pack-invoice-file" class="form-control" accept=".pdf,image/*" onchange="onInvoiceFileSelected(this)">
-                        <div id="ai-analyze-bar" style="display:none; margin-top:8px;">
-                            <button type="button" id="btn-ai-analyze" onclick="analyzeInvoiceWithAI()" class="btn btn-primary" style="background: linear-gradient(135deg, #7c3aed, #2563eb); border:none; display:flex; align-items:center; gap:8px; font-size:13px;">
-                                <span id="ai-btn-icon">✨</span>
-                                <span id="ai-btn-text">Analizar Factura con IA Gemini</span>
-                            </button>
-                            <div id="ai-status-msg" style="font-size:12px; margin-top:6px; color:#475569;"></div>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Descripción del Contenido <span id="ai-badge-desc" style="display:none; background:#7c3aed; color:#fff; font-size:10px; padding:2px 7px; border-radius:20px; margin-left:6px;">✨ Relleno por IA</span></label>
-                        <input type="text" id="pack-desc" class="form-control" placeholder="Ej: 4 Perfumes Carolina Herrera" required>
-                    </div>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-                        <div class="form-group">
-                            <label class="form-label">Peso Registrado (Kg) <span id="ai-badge-weight" style="display:none; background:#7c3aed; color:#fff; font-size:10px; padding:2px 7px; border-radius:20px; margin-left:6px;">✨ IA</span></label>
-                            <input type="number" step="0.01" id="pack-weight" class="form-control" placeholder="2.44" required>
+                            <label class="form-label">📄 Factura / Invoice USA Adjunta (PDF / Imagen)</label>
+                            <div style="display: flex; gap: 8px; align-items: center;">
+                                <input type="file" id="pack-invoice-file" class="form-control" accept=".pdf,image/*" onchange="onInvoiceFileSelected(this)" style="flex:1;">
+                                <button type="button" id="btn-clear-invoice" onclick="clearInvoiceFile()" style="display:none; padding:9px 14px; border-radius:6px; font-size:13px; font-weight:600; border:1px solid #dc2626; background:#fff; color:#dc2626; cursor:pointer; white-space:nowrap;"><i class="fa-solid fa-times"></i> Quitar</button>
+                            </div>
+                            <div id="ai-analyze-bar" style="display:none; margin-top:8px;">
+                                <button type="button" id="btn-ai-analyze" onclick="analyzeInvoiceWithAI()" class="btn btn-primary" style="background: linear-gradient(135deg, #7c3aed, #2563eb); border:none; display:flex; align-items:center; gap:8px; font-size:13px;">
+                                    <span id="ai-btn-icon">✨</span>
+                                    <span id="ai-btn-text">Analizar Factura con IA Gemini</span>
+                                </button>
+                                <div id="ai-status-msg" style="font-size:12px; margin-top:6px; color:#475569;"></div>
+                            </div>
                         </div>
                         <div class="form-group">
-                            <label class="form-label">Valor Declarado FOB ($ USD) <span id="ai-badge-fob" style="display:none; background:#7c3aed; color:#fff; font-size:10px; padding:2px 7px; border-radius:20px; margin-left:6px;">✨ IA</span></label>
-                            <input type="number" step="0.01" id="pack-fob" class="form-control" placeholder="180.00" required>
+                            <label class="form-label">Descripción del Contenido <span id="ai-badge-desc" style="display:none; background:#7c3aed; color:#fff; font-size:10px; padding:2px 7px; border-radius:20px; margin-left:6px;">✨ Relleno por IA</span></label>
+                            <input type="text" id="pack-desc" class="form-control" placeholder="Ej: 4 Perfumes Carolina Herrera" required>
                         </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                            <div class="form-group">
+                                <label class="form-label">Peso Registrado (Kg) <span id="ai-badge-weight" style="display:none; background:#7c3aed; color:#fff; font-size:10px; padding:2px 7px; border-radius:20px; margin-left:6px;">✨ IA</span></label>
+                                <input type="number" step="0.01" id="pack-weight" class="form-control" placeholder="2.44" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Valor Declarado FOB ($ USD) <span id="ai-badge-fob" style="display:none; background:#7c3aed; color:#fff; font-size:10px; padding:2px 7px; border-radius:20px; margin-left:6px;">✨ IA</span></label>
+                                <input type="number" step="0.01" id="pack-fob" class="form-control" placeholder="180.00" required>
+                            </div>
+                        </div>
+                    </form>
+                    <div style="display: flex; justify-content: flex-end; gap: 12px; border-top: 1px solid var(--sap-border); padding-top: 16px; margin-top: 16px;">
+                        <button class="btn btn-secondary" onclick="closeModal('modal-package')">Cancelar</button>
+                        <button class="btn btn-primary" form="form-package" type="submit">Ingresar Paquete</button>
                     </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" onclick="closeModal('modal-package')">Cancelar</button>
-                <button class="btn btn-primary" form="form-package" type="submit">Ingresar Paquete</button>
+                </div>
             </div>
         </div>
     </div>
@@ -1691,6 +1857,97 @@
             'Cajero / Liquidador Lince': ['Sede Lince', 'Guías Máster', 'Finanzas', 'Rotulos']
         };
 
+        const TAB_PERM_MAP = {
+            'dashboard': 'Dashboard',
+            'sd-customers': 'Clientes',
+            'sd-dni': 'Expedientes DNI',
+            'mm-miami': 'Bodega Miami',
+            'mm-tingo': 'Tingo Maria',
+            'mm-lince': 'Sede Lince',
+            'mm-master-guides': 'Guías Máster',
+            'shp-deliveries': 'Reparto Carro Amex',
+            'shp-labels': 'Rotulos',
+            'fico-liquidations': 'Finanzas',
+            'sys-users': 'Usuarios',
+            'sys-config': 'Configuracion'
+        };
+
+        function normalizeUserSession(raw) {
+            if (!raw || typeof raw !== 'object') return null;
+            const username = raw.username ?? raw.Username;
+            if (!username) return null;
+            return {
+                id: raw.id ?? raw.Id,
+                username,
+                email: raw.email ?? raw.Email ?? '',
+                fullName: raw.fullName ?? raw.FullName ?? username,
+                roleName: raw.roleName ?? raw.RoleName ?? '',
+                customPermissions: raw.customPermissions ?? raw.CustomPermissions ?? '',
+                isActive: raw.isActive ?? raw.IsActive ?? true
+            };
+        }
+
+        function getEffectivePermissions(session) {
+            if (!session) return [];
+            if (session.roleName === 'Administrador General') return [...ALL_MODULE_PERMISSIONS];
+            const fromRole = ROLE_PERM_MAP[session.roleName] || [];
+            const custom = (session.customPermissions || '')
+                .split(',')
+                .map(s => s.trim())
+                .filter(Boolean);
+            return custom.length > 0 ? custom : fromRole;
+        }
+
+        function showLoginScreen() {
+            document.getElementById('login-screen-container').style.display = 'flex';
+        }
+
+        function hideLoginScreen() {
+            document.getElementById('login-screen-container').style.display = 'none';
+        }
+
+        function clearStoredSession() {
+            localStorage.removeItem('amex_user_session');
+            currentUserSession = null;
+        }
+
+        function closeAllModals() {
+            document.querySelectorAll('.modal-overlay.active').forEach(el => el.classList.remove('active'));
+            toggleSidebar(false);
+        }
+
+        function ensureActiveWorkspaceTab(allowedPerms) {
+            const perms = allowedPerms ?? (currentUserSession ? getEffectivePermissions(currentUserSession) : []);
+            const activeTab = document.querySelector('.view-tab.active');
+            if (activeTab) {
+                const tabKey = activeTab.id.replace(/^tab-/, '');
+                const requiredPerm = TAB_PERM_MAP[tabKey];
+                const isAdmin = currentUserSession?.roleName === 'Administrador General';
+                if (!requiredPerm || isAdmin || perms.includes(requiredPerm)) return;
+            }
+            for (const [tabKey, perm] of Object.entries(TAB_PERM_MAP)) {
+                if (!perms.includes(perm)) continue;
+                const navEl = document.querySelector(`.nav-item[data-perm="${perm}"]`);
+                switchTab(tabKey, navEl);
+                return;
+            }
+            const dashboard = document.getElementById('tab-dashboard');
+            if (dashboard) {
+                document.querySelectorAll('.view-tab').forEach(el => el.classList.remove('active'));
+                dashboard.classList.add('active');
+            }
+        }
+
+        function initSessionLifecycle() {
+            window.addEventListener('pageshow', (event) => {
+                if (event.persisted) checkSessionState();
+            });
+            window.addEventListener('afterprint', () => {
+                closeAllModals();
+                document.body.classList.remove('is-printing');
+            });
+        }
+
         // System Configuration State
         let sysConfig = {
             amexRatePerKg: 12.00,
@@ -1702,32 +1959,62 @@
         let currentUserSession = null;
 
         document.addEventListener('DOMContentLoaded', () => {
+            initSessionLifecycle();
             checkSessionState();
         });
 
+        async function loadAppData() {
+            await Promise.allSettled([
+                loadCustomers(),
+                loadPackages(),
+                loadOrders(),
+                loadUsers()
+            ]);
+        }
+
         function checkSessionState() {
             const savedSession = localStorage.getItem('amex_user_session');
-            if (savedSession) {
-                try {
-                    currentUserSession = JSON.parse(savedSession);
-                    document.getElementById('login-screen-container').style.display = 'none';
-                    document.getElementById('session-user-name').textContent = currentUserSession.fullName || currentUserSession.username;
-                    document.getElementById('session-user-role').textContent = currentUserSession.roleName;
-
-                    loadCustomers();
-                    loadPackages();
-                    loadOrders();
-                    loadUsers();
-                    renderPermGrid('create-perms-container');
-                    renderPermGrid('edit-perms-container');
-                    applyUserPermissionsToNavigation();
-                    return;
-                } catch (e) {
-                    console.error('Error parsing session', e);
-                }
+            if (!savedSession) {
+                showLoginScreen();
+                return;
             }
-            // Si no hay sesión válida, mostrar login screen
-            document.getElementById('login-screen-container').style.display = 'flex';
+
+            let parsed;
+            try {
+                parsed = JSON.parse(savedSession);
+            } catch (e) {
+                console.error('Error parsing session', e);
+                clearStoredSession();
+                showLoginScreen();
+                return;
+            }
+
+            const session = normalizeUserSession(parsed);
+            if (!session || session.isActive === false) {
+                clearStoredSession();
+                showLoginScreen();
+                return;
+            }
+
+            try {
+                currentUserSession = session;
+                localStorage.setItem('amex_user_session', JSON.stringify(session));
+
+                hideLoginScreen();
+                document.getElementById('session-user-name').textContent = session.fullName || session.username;
+                document.getElementById('session-user-role').textContent = session.roleName || 'Sin rol';
+
+                renderPermGrid('create-perms-container');
+                renderPermGrid('edit-perms-container');
+                applyUserPermissionsToNavigation();
+                ensureActiveWorkspaceTab();
+
+                void loadAppData();
+            } catch (e) {
+                console.error('Error restoring session', e);
+                clearStoredSession();
+                showLoginScreen();
+            }
         }
 
         async function handleLoginSubmit(e) {
@@ -1754,9 +2041,11 @@
                 }
 
                 const userData = await res.json();
-                localStorage.setItem('amex_user_session', JSON.stringify(userData));
+                const session = normalizeUserSession(userData);
+                if (!session) throw new Error('Respuesta de login inválida');
+                localStorage.setItem('amex_user_session', JSON.stringify(session));
                 
-                showToast(`¡Bienvenido al sistema, ${userData.fullName || userData.username}!`);
+                showToast(`¡Bienvenido al sistema, ${session.fullName || session.username}!`);
                 checkSessionState();
 
             } catch (err) {
@@ -1775,22 +2064,23 @@
         }
 
         function logout() {
-            localStorage.removeItem('amex_user_session');
-            currentUserSession = null;
+            clearStoredSession();
+            closeAllModals();
             document.getElementById('login-form').reset();
             document.getElementById('login-error-msg').style.display = 'none';
-            document.getElementById('login-screen-container').style.display = 'flex';
+            showLoginScreen();
             showToast('Sesión cerrada correctamente');
         }
 
         function applyUserPermissionsToNavigation() {
             if (!currentUserSession) return;
             const role = currentUserSession.roleName;
-            const perms = currentUserSession.customPermissions ? currentUserSession.customPermissions.split(',').map(s => s.trim()) : [];
+            const perms = getEffectivePermissions(currentUserSession);
 
             // Si es Administrador General, mostrar todos los módulos
             if (role === 'Administrador General') {
-                document.querySelectorAll('.sap-module-group').forEach(el => el.style.display = 'block');
+                document.querySelectorAll('.sap-module-group').forEach(el => { el.style.display = 'block'; });
+                document.querySelectorAll('.nav-item').forEach(el => { el.style.display = 'flex'; });
                 return;
             }
 
@@ -1823,20 +2113,52 @@
         }
 
         function switchTab(tabId, element) {
+            const targetTab = document.getElementById(`tab-${tabId}`);
+            if (!targetTab) {
+                console.warn('Vista no encontrada:', tabId);
+                ensureActiveWorkspaceTab();
+                return;
+            }
+
             document.querySelectorAll('.view-tab').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-            
-            const targetTab = document.getElementById(`tab-${tabId}`);
-            if (targetTab) {
-                targetTab.classList.add('active');
-            }
+
+            targetTab.classList.add('active');
             if (element) {
                 element.classList.add('active');
             }
         }
 
-        function openModal(id) { document.getElementById(id).classList.add('active'); }
-        function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+        function toggleSidebar(forceState = null) {
+            const sidebar = document.querySelector('.sap-sidebar');
+            if (!sidebar) return;
+            if (forceState !== null) {
+                if (forceState) {
+                    sidebar.classList.add('collapsed');
+                } else {
+                    sidebar.classList.remove('collapsed');
+                }
+            } else {
+                sidebar.classList.toggle('collapsed');
+            }
+        }
+
+        function openModal(id) { 
+            document.getElementById(id).classList.add('active'); 
+            toggleSidebar(true);
+            if (id === 'modal-package') {
+                const searchInput = document.getElementById('locker-search-input');
+                if (searchInput) searchInput.value = '';
+                populateLockerSelects('');
+            }
+        }
+        function closeModal(id) { 
+            document.getElementById(id).classList.remove('active'); 
+            const activeModals = document.querySelectorAll('.modal-overlay.active');
+            if (activeModals.length === 0) {
+                toggleSidebar(false);
+            }
+        }
 
         function showToast(message, type = 'success') {
             const container = document.getElementById('toast-container');
@@ -1884,9 +2206,16 @@
         }
 
         async function loadUsers() {
-            const res = await fetch(`${API_URL}/users`);
-            usersData = await res.json();
-            renderUsers();
+            try {
+                const res = await fetch(`${API_URL}/users`);
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const data = await res.json();
+                usersData = Array.isArray(data) ? data : [];
+                renderUsers();
+            } catch (err) {
+                console.error('Error al cargar usuarios:', err);
+                usersData = [];
+            }
         }
 
         function renderUsers() {
@@ -2003,12 +2332,20 @@
         }
 
         async function loadCustomers() {
-            const res = await fetch(`${API_URL}/customers`);
-            customersData = await res.json();
-            renderCustomers();
-            renderDniMasterTable();
-            populateLockerSelects();
-            updateKPIs();
+            try {
+                const res = await fetch(`${API_URL}/customers`);
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const data = await res.json();
+                customersData = Array.isArray(data) ? data : [];
+                renderCustomers();
+                renderDniMasterTable();
+                populateLockerSelects();
+                updateKPIs();
+            } catch (err) {
+                console.error('Error al cargar clientes:', err);
+                customersData = [];
+                showToast('No se pudieron cargar los clientes. Verifique que la API esté en línea.', 'error');
+            }
         }
 
         async function loadShipments() {
@@ -2027,12 +2364,16 @@
             const tbody = document.getElementById('table-shipments-body');
             if (!tbody) return;
 
-            if (!shipmentsData || shipmentsData.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="9" style="text-align: center; color: #94a3b8;">No hay Guías Máster registradas</td></tr>`;
+            const q = document.getElementById('search-shipments')?.value || '';
+            let filtered = shipmentsData || [];
+            if (q) filtered = filtered.filter(s => matchesSearch(s, q, ['masterGuideCode', 'partnerRefNumber', 'originWarehouse', 'destinationWarehouse', 'status']));
+
+            if (!filtered || filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="9" style="text-align: center; color: #94a3b8;">${q ? 'No se encontraron resultados para "' + q + '"' : 'No hay Guías Máster registradas'}</td></tr>`;
                 return;
             }
 
-            tbody.innerHTML = shipmentsData.map(s => {
+            tbody.innerHTML = filtered.map(s => {
                 const isReceived = s.status === 'RECIBIDO_PERU' || s.status === 'CERRADO';
                 const statusBadge = isReceived 
                     ? '<span class="badge" style="background: #16a34a; color: white;">Recibido en Perú</span>' 
@@ -2169,9 +2510,24 @@
             }
         }
 
+        function matchesSearch(item, query, fields) {
+            if (!query) return true;
+            const q = query.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+            return fields.some(f => {
+                const val = typeof f === 'function' ? f(item) : item[f];
+                return val != null && val.toString().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').includes(q);
+            });
+        }
+
         function renderCustomers() {
             const tbody = document.getElementById('table-customers-body');
-            tbody.innerHTML = customersData.map(c => `
+            const q = document.getElementById('search-customers')?.value || '';
+            const filtered = customersData.filter(c => matchesSearch(c, q, ['lockerCode', 'name', 'taxId', 'phone', 'district', 'destinationAgency']));
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="9" style="text-align: center; color: #94a3b8;">${q ? 'No se encontraron resultados para "' + q + '"' : 'No hay clientes registrados'}</td></tr>`;
+                return;
+            }
+            tbody.innerHTML = filtered.map(c => `
                 <tr>
                     <td><input type="checkbox" class="customers-checkbox" value="${c.id}"></td>
                     <td><strong style="color: var(--sap-primary); font-family: 'JetBrains Mono';">${c.lockerCode}</strong></td>
@@ -2196,7 +2552,13 @@
 
         function renderDniMasterTable() {
             const tbody = document.getElementById('table-dni-master-body');
-            tbody.innerHTML = customersData.map(c => `
+            const q = document.getElementById('search-dni')?.value || '';
+            const filtered = customersData.filter(c => matchesSearch(c, q, ['lockerCode', 'name', 'taxId']));
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: #94a3b8;">${q ? 'No se encontraron resultados para "' + q + '"' : 'No hay clientes registrados'}</td></tr>`;
+                return;
+            }
+            tbody.innerHTML = filtered.map(c => `
                 <tr>
                     <td><strong style="color: var(--sap-primary); font-family: 'JetBrains Mono';">${c.lockerCode}</strong></td>
                     <td><strong>${c.name}</strong></td>
@@ -2212,24 +2574,50 @@
             `).join('');
         }
 
-        function populateLockerSelects() {
+        function populateLockerSelects(filterText = '') {
             const select = document.getElementById('pack-locker-select');
-            select.innerHTML = customersData.map(c => 
+            if (!select) return;
+            if (!Array.isArray(customersData) || customersData.length === 0) {
+                select.innerHTML = '<option value="">— Registre un cliente primero —</option>';
+                return;
+            }
+            const filtered = customersData.filter(c => {
+                const searchStr = `${c.lockerCode} ${c.name} ${c.destinationAgency}`.toLowerCase();
+                return searchStr.includes(filterText.toLowerCase());
+            });
+            if (filtered.length === 0) {
+                select.innerHTML = '<option value="">— Sin coincidencias —</option>';
+                return;
+            }
+            select.innerHTML = filtered.map(c => 
                 `<option value="${c.lockerCode}">${c.lockerCode} - ${c.name} (${c.destinationAgency})</option>`
             ).join('');
         }
 
+        function filterLockerSelect() {
+            const val = document.getElementById('locker-search-input')?.value || '';
+            populateLockerSelects(val);
+        }
+
         async function loadPackages() {
-            const res = await fetch(`${API_URL}/packages`);
-            packagesData = await res.json();
-            loadShipments();
-            renderMiamiPackages();
-            renderTingoPackages();
-            renderLincePackages();
-            renderDeliveriesTable('ALL');
-            renderShpLabels();
-            populateLincePackageSelect();
-            updateKPIs();
+            try {
+                const res = await fetch(`${API_URL}/packages`);
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const data = await res.json();
+                packagesData = Array.isArray(data) ? data : [];
+                loadShipments();
+                renderMiamiPackages();
+                renderTingoPackages();
+                renderLincePackages();
+                renderDeliveriesTable('ALL');
+                renderShpLabels();
+                populateLincePackageSelect();
+                updateKPIs();
+            } catch (err) {
+                console.error('Error al cargar paquetes:', err);
+                packagesData = [];
+                showToast('No se pudieron cargar los paquetes.', 'error');
+            }
         }
 
         function formatDateOnly(dateStr) {
@@ -2244,14 +2632,18 @@
 
         function renderMiamiPackages() {
             const tbody = document.getElementById('table-miami-body');
-            const miamiPackages = packagesData.filter(p => p.currentLocation === 'TibCourierMiami');
+            const q = document.getElementById('search-miami')?.value || '';
+            let miamiPackages = packagesData.filter(p => p.currentLocation === 'TibCourierMiami');
+            if (q) miamiPackages = miamiPackages.filter(p => matchesSearch(p, q, ['trackingUsa', 'warehouseReceiptNumber', 'invoiceNumber', 'lockerCode', 'customsDni', 'description', 'customsConsigneeName', 'customerName']));
             
             if (miamiPackages.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="15" style="text-align: center; color: #94a3b8;">No hay paquetes en almacén Miami</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="16" style="text-align: center; color: #94a3b8;">${q ? 'No se encontraron resultados para "' + q + '"' : 'No hay paquetes en almacén Miami'}</td></tr>`;
                 return;
             }
 
-            tbody.innerHTML = miamiPackages.map(p => `
+            tbody.innerHTML = miamiPackages.map(p => {
+                const cust = customersData.find(c => c.id === p.customerId || c.lockerCode === p.lockerCode);
+                return `
                 <tr>
                     <td><input type="checkbox" class="miami-checkbox" value="${p.id}"></td>
                     <td><strong style="color: #334155;">${formatDateOnly(p.createdAt)}</strong></td>
@@ -2261,17 +2653,15 @@
                     <td><span class="badge badge-type">${p.packageType || 'CAJA'}</span></td>
                     <td><strong style="color: var(--sap-primary); font-family: 'JetBrains Mono';">${p.invoiceNumber || '-'}</strong></td>
                     <td><span style="font-weight: 700;">${p.lockerCode}</span></td>
-                    <td><strong>${p.customsDni || p.customerName}</strong></td>
+                    <td><strong>${p.customerName || (cust ? cust.name : '-')}</strong></td>
+                    <td><strong>${p.customsDni || (cust ? cust.taxId : '-')}</strong></td>
                     <td>${p.description}</td>
                     <td><strong>${p.weightKg} Kg</strong></td>
                     <td>$${p.declaredValueUsd.toFixed(2)} USD</td>
                     <td>
-                        ${(() => {
-                            const cust = customersData.find(c => c.id === p.customerId || c.lockerCode === p.lockerCode);
-                            return cust 
-                                ? `<button class="btn btn-primary" style="padding: 4px 10px; font-size: 11px; background: #0070f2; border-radius: 12px;" onclick="openDniViewer('${cust.id}')"><i class="fa-solid fa-eye"></i> Abrir Visor DNI</button>`
-                                : '<span style="color: #94a3b8; font-size: 11px;">Sin Cliente</span>';
-                        })()}
+                        ${cust 
+                            ? `<button class="btn btn-primary" style="padding: 4px 10px; font-size: 11px; background: #0070f2; border-radius: 12px;" onclick="openDniViewer('${cust.id}')"><i class="fa-solid fa-eye"></i> Abrir Visor DNI</button>`
+                            : '<span style="color: #94a3b8; font-size: 11px;">Sin Cliente</span>'}
                     </td>
                     <td>
                         ${p.invoicePdfUrl 
@@ -2283,19 +2673,24 @@
                         <button class="btn btn-secondary" style="padding: 4px 10px; font-size: 11.5px;" onclick="markArrivedTingo('${p.id}')"><i class="fa-solid fa-plane-arrival"></i> Arribo Tingo María</button>
                     </td>
                 </tr>
-            `).join('');
+            `;
+            }).join('');
         }
 
         function renderTingoPackages() {
             const tbody = document.getElementById('table-tingo-body');
-            const tingoPackages = packagesData.filter(p => p.currentLocation === 'TibCourierTingoMaria');
+            const q = document.getElementById('search-tingo')?.value || '';
+            let tingoPackages = packagesData.filter(p => p.currentLocation === 'TibCourierTingoMaria');
+            if (q) tingoPackages = tingoPackages.filter(p => matchesSearch(p, q, ['trackingUsa', 'warehouseReceiptNumber', 'invoiceNumber', 'lockerCode', 'customsDni', 'customerName']));
 
             if (tingoPackages.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="13" style="text-align: center; color: #94a3b8;">No hay paquetes pendientes de recojo en Tingo María</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="14" style="text-align: center; color: #94a3b8;">${q ? 'No se encontraron resultados para "' + q + '"' : 'No hay paquetes pendientes de recojo en Tingo María'}</td></tr>`;
                 return;
             }
 
-            tbody.innerHTML = tingoPackages.map(p => `
+            tbody.innerHTML = tingoPackages.map(p => {
+                const cust = customersData.find(c => c.id === p.customerId || c.lockerCode === p.lockerCode);
+                return `
                 <tr>
                     <td><input type="checkbox" class="tingo-checkbox" value="${p.id}"></td>
                     <td><strong style="color: #334155;">${formatDateOnly(p.createdAt)}</strong></td>
@@ -2305,15 +2700,13 @@
                     <td><span class="badge badge-type">${p.packageType || 'CAJA'}</span></td>
                     <td><strong style="color: var(--sap-primary); font-family: 'JetBrains Mono';">${p.invoiceNumber || '-'}</strong></td>
                     <td><span style="font-weight: 700;">${p.lockerCode}</span></td>
-                    <td><strong>${p.customsDni || p.customerName}</strong></td>
+                    <td><strong>${p.customerName || (cust ? cust.name : '-')}</strong></td>
+                    <td><strong>${p.customsDni || (cust ? cust.taxId : '-')}</strong></td>
                     <td><strong>${p.weightKg} Kg</strong></td>
                     <td>
-                        ${(() => {
-                            const cust = customersData.find(c => c.id === p.customerId || c.lockerCode === p.lockerCode);
-                            return cust 
-                                ? `<button class="btn btn-primary" style="padding: 4px 10px; font-size: 11px; background: #0070f2; border-radius: 12px;" onclick="openDniViewer('${cust.id}')"><i class="fa-solid fa-eye"></i> Abrir Visor DNI</button>`
-                                : '<span style="color: #94a3b8; font-size: 11px;">Sin Cliente</span>';
-                        })()}
+                        ${cust 
+                            ? `<button class="btn btn-primary" style="padding: 4px 10px; font-size: 11px; background: #0070f2; border-radius: 12px;" onclick="openDniViewer('${cust.id}')"><i class="fa-solid fa-eye"></i> Abrir Visor DNI</button>`
+                            : '<span style="color: #94a3b8; font-size: 11px;">Sin Cliente</span>'}
                     </td>
                     <td>
                         ${p.invoicePdfUrl 
@@ -2325,20 +2718,23 @@
                         <button class="btn btn-secondary" style="padding: 2px 6px; font-size: 10.5px; margin-left: 4px;" onclick="openTrackingTimeline('${p.id}')"><i class="fa-solid fa-clock-rotate-left"></i> Timeline</button>
                     </td>
                 </tr>
-            `).join('');
+            `;
+            }).join('');
         }
 
         function renderLincePackages() {
             const tbody = document.getElementById('table-lince-packages-body');
-            const lincePackages = packagesData.filter(p => p.currentLocation === 'AmexLince');
+            const q = document.getElementById('search-lince')?.value || '';
+            let lincePackages = packagesData.filter(p => p.currentLocation === 'AmexLince');
+            if (q) lincePackages = lincePackages.filter(p => matchesSearch(p, q, ['warehouseReceiptNumber', 'lockerCode', 'invoiceNumber', 'trackingUsa', 'customsDni', 'customerName']));
 
             if (lincePackages.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="12" style="text-align: center; color: #94a3b8;">No hay paquetes en el Almacén de Lince</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="13" style="text-align: center; color: #94a3b8;">${q ? 'No se encontraron resultados para "' + q + '"' : 'No hay paquetes en el Almacén de Lince'}</td></tr>`;
                 return;
             }
 
             tbody.innerHTML = lincePackages.map(p => {
-                const customer = customersData.find(c => c.lockerCode === p.lockerCode);
+                const customer = customersData.find(c => c.lockerCode === p.lockerCode || c.id === p.customerId);
 
                 return `
                     <tr>
@@ -2347,6 +2743,7 @@
                         <td><span style="font-family: 'JetBrains Mono'; font-size: 11.5px; color: #64748b;">${formatTimeOnly(p.createdAt)}</span></td>
                         <td><span class="badge badge-wr">${p.warehouseReceiptNumber || '-'}</span></td>
                         <td><span style="color: var(--sap-primary); font-weight: 700; font-family: 'JetBrains Mono';">${p.lockerCode}</span></td>
+                        <td><strong>${p.customerName || (customer ? customer.name : '-')}</strong></td>
                         <td><strong style="color: var(--sap-primary); font-family: 'JetBrains Mono';">${p.invoiceNumber || '-'}</strong></td>
                         <td>${p.trackingUsa}</td>
                         <td><strong>${p.customsDni || (customer ? customer.taxId : '-')}</strong></td>
@@ -2375,8 +2772,12 @@
             }).join('');
         }
 
+        let currentDeliveryFilter = 'ALL';
+
         function renderDeliveriesTable(filterMode = 'ALL') {
+            currentDeliveryFilter = filterMode;
             const tbody = document.getElementById('table-deliveries-body');
+            const q = document.getElementById('search-deliveries')?.value || '';
             let filtered = packagesData;
 
             if (filterMode === 'CAR') {
@@ -2387,8 +2788,16 @@
                 filtered = packagesData.filter(p => p.deliveryStatus === 'DeliveredAtHome' || p.deliveryStatus === 'PickedUpAtWarehouse');
             }
 
+            if (q) filtered = filtered.filter(p => {
+                const customer = customersData.find(c => c.lockerCode === p.lockerCode);
+                const order = ordersData.find(o => o.packageId === p.id);
+                return matchesSearch(p, q, ['warehouseReceiptNumber', 'lockerCode', 'customerName', 'customsConsigneeName', 'deliveryMethod', 'deliveryStatus'])
+                    || (customer && matchesSearch(customer, q, ['deliveryAddress', 'district']))
+                    || (order && matchesSearch(order, q, ['paidAmount', 'paymentMethod', 'paymentCurrency']));
+            });
+
             if (filtered.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="11" style="text-align: center; color: #94a3b8;">No hay envíos registrados en esta categoría</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="11" style="text-align: center; color: #94a3b8;">${q ? 'No se encontraron resultados para "' + q + '"' : 'No hay envíos registrados en esta categoría'}</td></tr>`;
                 return;
             }
 
@@ -2519,7 +2928,20 @@
 
         function renderShpLabels() {
             const tbody = document.getElementById('table-shp-labels-body');
-            tbody.innerHTML = packagesData.map(p => {
+            const q = document.getElementById('search-labels')?.value || '';
+            let filtered = packagesData;
+            if (q) filtered = filtered.filter(p => {
+                const customer = customersData.find(c => c.lockerCode === p.lockerCode);
+                const agency = customer ? customer.destinationAgency : 'ENTREGA LINCE';
+                const ubigeo = customer ? `${customer.department} / ${customer.province}` : 'LIMA';
+                return matchesSearch(p, q, ['warehouseReceiptNumber', 'lockerCode', 'customsDni', 'customerName', 'invoiceNumber'])
+                    || (customer && matchesSearch(customer, q, ['destinationAgency', 'department', 'province']));
+            });
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="10" style="text-align: center; color: #94a3b8;">${q ? 'No se encontraron resultados para "' + q + '"' : 'No hay paquetes para etiquetar'}</td></tr>`;
+                return;
+            }
+            tbody.innerHTML = filtered.map(p => {
                 const customer = customersData.find(c => c.lockerCode === p.lockerCode);
                 const agency = customer ? customer.destinationAgency : 'ENTREGA LINCE';
                 const ubigeo = customer ? `${customer.department} / ${customer.province}` : 'LIMA';
@@ -2764,15 +3186,33 @@
         }
 
         async function loadOrders() {
-            const res = await fetch(`${API_URL}/import-orders`);
-            ordersData = await res.json();
-            renderOrders();
-            updateKPIs();
+            try {
+                const res = await fetch(`${API_URL}/import-orders`);
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const data = await res.json();
+                ordersData = Array.isArray(data) ? data : [];
+                renderOrders();
+                updateKPIs();
+            } catch (err) {
+                console.error('Error al cargar órdenes:', err);
+                ordersData = [];
+            }
         }
 
         function renderOrders() {
             const tbody = document.getElementById('table-finance-body');
-            tbody.innerHTML = ordersData.map(o => {
+            const q = document.getElementById('search-orders')?.value || '';
+            let filtered = ordersData;
+            if (q) filtered = filtered.filter(o => {
+                const pkg = packagesData.find(p => p.id === o.packageId);
+                return matchesSearch(o, q, ['lockerCode', 'customerName', 'paymentMethod', 'paymentReference', 'paymentCurrency'])
+                    || (pkg && matchesSearch(pkg, q, ['warehouseReceiptNumber', 'trackingUsa', 'invoiceNumber']));
+            });
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="12" style="text-align: center; color: #94a3b8;">${q ? 'No se encontraron resultados para "' + q + '"' : 'No hay órdenes de importación registradas'}</td></tr>`;
+                return;
+            }
+            tbody.innerHTML = filtered.map(o => {
                 const package = packagesData.find(p => p.id === o.packageId);
                 const wrNum = package ? package.warehouseReceiptNumber : '-';
 
@@ -2814,13 +3254,24 @@
         }
 
         function updateKPIs() {
-            document.getElementById('kpi-total-lockers').innerText = customersData.length;
-            document.getElementById('kpi-miami-count').innerText = packagesData.filter(p => p.currentLocation === 'TibCourierMiami').length;
-            document.getElementById('kpi-tingo-count').innerText = packagesData.filter(p => p.currentLocation === 'TibCourierTingoMaria').length;
-            document.getElementById('kpi-transit-car-count').innerText = packagesData.filter(p => p.deliveryMethod === 'AmexVehicleDelivery' || p.deliveryStatus === 'InTransitAmexVehicle').length;
-            
-            const totalProfit = ordersData.reduce((acc, curr) => acc + curr.amexNetProfitUsd, 0);
-            document.getElementById('kpi-profit-total').innerText = `$${totalProfit.toFixed(2)} USD`;
+            if (!Array.isArray(customersData)) customersData = [];
+            if (!Array.isArray(packagesData)) packagesData = [];
+            if (!Array.isArray(ordersData)) ordersData = [];
+
+            const kpiLockers = document.getElementById('kpi-total-lockers');
+            const kpiMiami = document.getElementById('kpi-miami-count');
+            const kpiTingo = document.getElementById('kpi-tingo-count');
+            const kpiTransit = document.getElementById('kpi-transit-car-count');
+            const kpiProfit = document.getElementById('kpi-profit-total');
+            if (!kpiLockers || !kpiMiami || !kpiTingo || !kpiTransit || !kpiProfit) return;
+
+            kpiLockers.innerText = customersData.length;
+            kpiMiami.innerText = packagesData.filter(p => p.currentLocation === 'TibCourierMiami').length;
+            kpiTingo.innerText = packagesData.filter(p => p.currentLocation === 'TibCourierTingoMaria').length;
+            kpiTransit.innerText = packagesData.filter(p => p.deliveryMethod === 'AmexVehicleDelivery' || p.deliveryStatus === 'InTransitAmexVehicle').length;
+
+            const totalProfit = ordersData.reduce((acc, curr) => acc + (curr.amexNetProfitUsd || 0), 0);
+            kpiProfit.innerText = `$${totalProfit.toFixed(2)} USD`;
         }
 
         function handleSaveSystemConfig(e) {
@@ -2920,8 +3371,9 @@
 
             titleEl.innerHTML = `<i class="fa-solid fa-file-pdf" style="color: #ef4444; font-size: 20px;"></i> Visor PDF: ${title}`;
             externalLink.href = url;
-            iframe.src = url;
+            iframe.src = url + '#navpanes=0';
 
+            toggleSidebar(true);
             openModal('modal-pdf-viewer');
         }
 
@@ -2954,15 +3406,47 @@
         }
 
         // ─── IA Gemini: Análisis de Invoice ─────────────────────────────────
+        function clearInvoiceFile() {
+            const input = document.getElementById('pack-invoice-file');
+            input.value = '';
+            onInvoiceFileSelected(input);
+        }
+
         function onInvoiceFileSelected(input) {
             const bar = document.getElementById('ai-analyze-bar');
-            bar.style.display = input.files && input.files[0] ? 'block' : 'none';
+            const clearBtn = document.getElementById('btn-clear-invoice');
+            const hasFile = input.files && input.files[0];
+            bar.style.display = hasFile ? 'block' : 'none';
+            clearBtn.style.display = hasFile ? 'block' : 'none';
             // Resetear badges si cambia el archivo
             ['ai-badge-invoice','ai-badge-desc','ai-badge-weight','ai-badge-fob'].forEach(id => {
                 const el = document.getElementById(id);
                 if (el) el.style.display = 'none';
             });
             document.getElementById('ai-status-msg').textContent = '';
+
+            const modalContent = document.getElementById('modal-package-content');
+            const previewPane = document.getElementById('modal-package-preview');
+            const previewFrame = document.getElementById('modal-package-preview-frame');
+
+            if (hasFile) {
+                modalContent.classList.add('split');
+                previewPane.classList.remove('hidden');
+                const file = input.files[0];
+                const url = URL.createObjectURL(file);
+                if (file.type === 'application/pdf') {
+                    previewFrame.innerHTML = `<embed src="${url}#navpanes=0" type="application/pdf">`;
+                } else {
+                    previewFrame.innerHTML = `<img src="${url}" style="width:100%;height:100%;object-fit:contain;" alt="Invoice preview">`;
+                }
+            } else {
+                modalContent.classList.remove('split');
+                previewPane.classList.add('hidden');
+                previewFrame.innerHTML = `<div class="modal-preview-placeholder">
+                    <i class="fa-solid fa-file-import" style="font-size: 40px;"></i>
+                    <span>Selecciona un PDF para previsualizarlo</span>
+                </div>`;
+            }
         }
 
         async function analyzeInvoiceWithAI() {
@@ -3083,6 +3567,13 @@
                 closeModal('modal-package');
                 document.getElementById('form-package').reset();
                 document.getElementById('ai-analyze-bar').style.display = 'none';
+                document.getElementById('btn-clear-invoice').style.display = 'none';
+                document.getElementById('modal-package-content').classList.remove('split');
+                document.getElementById('modal-package-preview').classList.add('hidden');
+                document.getElementById('modal-package-preview-frame').innerHTML = `<div class="modal-preview-placeholder">
+                    <i class="fa-solid fa-file-import" style="font-size: 40px;"></i>
+                    <span>Selecciona un PDF para previsualizarlo</span>
+                </div>`;
                 ['ai-badge-desc','ai-badge-weight','ai-badge-fob'].forEach(id => {
                     document.getElementById(id).style.display = 'none';
                 });
@@ -3406,9 +3897,12 @@
 
             printContainer.innerHTML = labelsHtml;
             openModal('modal-label');
+            document.body.classList.add('is-printing');
             setTimeout(() => {
                 window.print();
                 printContainer.innerHTML = originalContent;
+                closeModal('modal-label');
+                document.body.classList.remove('is-printing');
             }, 300);
         }
 
@@ -3646,6 +4140,253 @@
                     }
                 });
             });
+        }
+
+        // ==========================================
+        // MÓDULO DE ESCANEO MÓVIL (QR & CÓDIGOS DE BARRA)
+        // ==========================================
+        let html5QrCode = null;
+        let isScannerRunning = false;
+        let scanSessionLogs = [];
+        let lastScannedCode = null;
+        let scanCooldown = false;
+
+        function playScanBeep() {
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(1046.50, audioCtx.currentTime); // Nota C6 (Beep agudo)
+                gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.15);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.15);
+            } catch (e) {
+                console.log('AudioContext error / blocked', e);
+            }
+
+            if (navigator.vibrate) {
+                navigator.vibrate([80, 40, 80]);
+            }
+        }
+
+        async function startMobileScanner() {
+            const placeholder = document.getElementById('scanner-placeholder');
+            const statusBadge = document.getElementById('scanner-status-badge');
+            const btnStart = document.getElementById('btn-start-scanner');
+            const btnStop = document.getElementById('btn-stop-scanner');
+            const selectGroup = document.getElementById('camera-select-group');
+            const cameraSelect = document.getElementById('scanner-camera-select');
+
+            if (typeof Html5Qrcode === 'undefined') {
+                showToast('❌ Error: La librería de escaneo no se pudo cargar. Revisa tu conexión.');
+                return;
+            }
+
+            try {
+                if (!html5QrCode) {
+                    html5QrCode = new Html5Qrcode("mobile-qr-reader");
+                }
+
+                if (placeholder) placeholder.style.display = 'none';
+
+                // Obtener cámaras disponibles
+                const cameras = await Html5Qrcode.getCameras();
+                if (!cameras || cameras.length === 0) {
+                    showToast('⚠️ No se detectaron cámaras en este dispositivo.');
+                    if (placeholder) placeholder.style.display = 'block';
+                    return;
+                }
+
+                // Llenar selector de cámaras
+                cameraSelect.innerHTML = '';
+                cameras.forEach((cam, idx) => {
+                    const opt = document.createElement('option');
+                    opt.value = cam.id;
+                    opt.textContent = cam.label || `Cámara ${idx + 1}`;
+                    cameraSelect.appendChild(opt);
+                });
+                if (cameras.length > 1) {
+                    selectGroup.style.display = 'block';
+                }
+
+                // Preferir cámara trasera ('environment') o la última cámara listada
+                let selectedCameraId = cameras[cameras.length - 1].id;
+                const backCam = cameras.find(c => c.label.toLowerCase().includes('back') || c.label.toLowerCase().includes('trasera') || c.label.toLowerCase().includes('environment'));
+                if (backCam) selectedCameraId = backCam.id;
+
+                cameraSelect.value = selectedCameraId;
+
+                const config = {
+                    fps: 15,
+                    qrbox: { width: 250, height: 180 },
+                    aspectRatio: 1.0
+                };
+
+                await html5QrCode.start(
+                    selectedCameraId,
+                    config,
+                    onScanSuccess,
+                    (errorMessage) => { /* ignorar errores de frame vacío */ }
+                );
+
+                isScannerRunning = true;
+                if (btnStart) btnStart.style.display = 'none';
+                if (btnStop) btnStop.style.display = 'inline-flex';
+                if (statusBadge) {
+                    statusBadge.style.background = '#059669';
+                    statusBadge.style.color = '#ffffff';
+                    statusBadge.textContent = '● En Vivo (Activo)';
+                }
+                showToast('📷 Cámara iniciada. Apunta al código de barras o QR.');
+            } catch (err) {
+                console.error("Error iniciando cámara:", err);
+                showToast('❌ Error iniciando cámara: ' + (err.message || err));
+                if (placeholder) placeholder.style.display = 'block';
+            }
+        }
+
+        async function stopMobileScanner() {
+            const placeholder = document.getElementById('scanner-placeholder');
+            const statusBadge = document.getElementById('scanner-status-badge');
+            const btnStart = document.getElementById('btn-start-scanner');
+            const btnStop = document.getElementById('btn-stop-scanner');
+
+            if (html5QrCode && isScannerRunning) {
+                try {
+                    await html5QrCode.stop();
+                    isScannerRunning = false;
+                } catch (e) {
+                    console.error("Error deteniendo lector:", e);
+                }
+            }
+
+            if (placeholder) placeholder.style.display = 'block';
+            if (btnStart) btnStart.style.display = 'inline-flex';
+            if (btnStop) btnStop.style.display = 'none';
+            if (statusBadge) {
+                statusBadge.style.background = '#e2e8f0';
+                statusBadge.style.color = '#475569';
+                statusBadge.textContent = 'Inactivo';
+            }
+            showToast('📷 Cámara detenida.');
+        }
+
+        async function changeScannerCamera(cameraId) {
+            if (html5QrCode && isScannerRunning) {
+                await html5QrCode.stop();
+                const config = { fps: 15, qrbox: { width: 250, height: 180 } };
+                await html5QrCode.start(cameraId, config, onScanSuccess, () => {});
+                showToast('🔄 Cámara cambiada.');
+            }
+        }
+
+        function onScanSuccess(decodedText, decodedResult) {
+            if (scanCooldown || lastScannedCode === decodedText) return;
+            scanCooldown = true;
+            setTimeout(() => { scanCooldown = false; }, 1500);
+
+            lastScannedCode = decodedText;
+            playScanBeep();
+            
+            const formatName = decodedResult && decodedResult.result && decodedResult.result.format 
+                ? decodedResult.result.format.formatName 
+                : 'QR_CODE / BARCODE';
+
+            processScannedCode(decodedText, formatName);
+        }
+
+        function processManualScan() {
+            const input = document.getElementById('manual-scan-input');
+            const text = input ? input.value.trim() : '';
+            if (!text) {
+                showToast('⚠️ Ingresa un código de prueba');
+                return;
+            }
+            playScanBeep();
+            processScannedCode(text, 'MANUAL_TEST');
+            if (input) input.value = '';
+        }
+
+        function processScannedCode(codeText, format) {
+            const timeStr = new Date().toLocaleTimeString();
+
+            // Actualizar tarjeta de último resultado
+            const valEl = document.getElementById('last-code-val');
+            const fmtEl = document.getElementById('last-code-fmt');
+            const timeEl = document.getElementById('last-code-time');
+
+            if (valEl) valEl.textContent = codeText;
+            if (fmtEl) fmtEl.textContent = format;
+            if (timeEl) timeEl.textContent = timeStr;
+
+            // Buscar coincidencia en el estado ERP local
+            let erpStatus = '<span class="badge" style="background:#f59e0b; color:white;">⚠️ No Registrado</span>';
+            let pkgFound = null;
+
+            if (typeof state !== 'undefined' && state.packages) {
+                pkgFound = state.packages.find(p => 
+                    p.trackingUsa?.toLowerCase() === codeText.toLowerCase() || 
+                    p.wrNumber?.toLowerCase() === codeText.toLowerCase() ||
+                    p.id === codeText
+                );
+                if (pkgFound) {
+                    erpStatus = `<span class="badge" style="background:#059669; color:white;">✅ Paquete ERP: ${pkgFound.status || 'En Almacén'}</span>`;
+                }
+            }
+
+            // Registrar en historial
+            scanSessionLogs.unshift({
+                time: timeStr,
+                code: codeText,
+                format: format,
+                erpStatus: erpStatus,
+                pkg: pkgFound
+            });
+
+            renderScanLogs();
+            showToast(`✅ Código Leído: ${codeText}`);
+        }
+
+        function renderScanLogs() {
+            const tbody = document.getElementById('table-scanner-logs-body');
+            if (!tbody) return;
+
+            if (scanSessionLogs.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--sap-text-muted); padding: 20px;">No se han realizado lecturas aún. Enciende la cámara para escanear.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = scanSessionLogs.map((log) => `
+                <tr>
+                    <td style="font-size:12px; color:var(--sap-text-muted);">${log.time}</td>
+                    <td style="font-family:'JetBrains Mono', monospace; font-weight:700; color:var(--sap-primary);">${log.code}</td>
+                    <td><span class="badge" style="background:#f1f5f9; color:#334155; font-size:11px;">${log.format}</span></td>
+                    <td>${log.erpStatus}</td>
+                    <td>
+                        <button class="btn btn-secondary" style="padding: 2px 8px; font-size:11px;" onclick="copyToClipboard('${log.code}')">
+                            <i class="fa-solid fa-copy"></i> Copiar
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function clearScanLogs() {
+            scanSessionLogs = [];
+            lastScannedCode = null;
+            renderScanLogs();
+            const valEl = document.getElementById('last-code-val');
+            if (valEl) valEl.textContent = '- - -';
+            showToast('🗑️ Historial de escaneo limpiado');
+        }
+
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text);
+            showToast('📋 Código copiado al portapapeles');
         }
 
         window.addEventListener('DOMContentLoaded', function () {
