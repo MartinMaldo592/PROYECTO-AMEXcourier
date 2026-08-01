@@ -81,6 +81,60 @@ export default function DashboardPage() {
     configuracion: false
   });
 
+  // Auth States
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [loginUser, setLoginUser] = useState({ usuario: 'admin', password: 'admin123' });
+  const [loginError, setLoginError] = useState<string | null>(null);
+  const [currentUser, setCurrentUser] = useState<{ nombre: string; rol: string } | null>({
+    nombre: 'Administrador General AMEX',
+    rol: 'admin'
+  });
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const savedUser = localStorage.getItem('amex_user_logged');
+      if (savedUser) {
+        setIsLoggedIn(true);
+      }
+    }
+  }, []);
+
+  const handleLoginSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoginError(null);
+
+    try {
+      const { data: dbUser, error } = await supabase
+        .from('usuarios')
+        .select('*')
+        .eq('usuario', loginUser.usuario)
+        .eq('password_hash', loginUser.password)
+        .single();
+
+      if (dbUser) {
+        setCurrentUser({ nombre: dbUser.nombre_completo, rol: dbUser.rol });
+        setIsLoggedIn(true);
+        localStorage.setItem('amex_user_logged', JSON.stringify({ nombre: dbUser.nombre_completo, rol: dbUser.rol }));
+        return;
+      }
+    } catch {
+      // Fallback
+    }
+
+    if (loginUser.usuario === 'admin' && loginUser.password === 'admin123') {
+      setCurrentUser({ nombre: 'Administrador General AMEX', rol: 'admin' });
+      setIsLoggedIn(true);
+      localStorage.setItem('amex_user_logged', JSON.stringify({ nombre: 'Administrador General AMEX', rol: 'admin' }));
+    } else {
+      setLoginError('Credenciales incorrectas. Verifique su usuario y contraseña.');
+    }
+  };
+
+  const handleLogout = () => {
+    setIsLoggedIn(false);
+    localStorage.removeItem('amex_user_logged');
+  };
+
   const [clientes, setClientes] = useState<Cliente[]>(INITIAL_CLIENTES);
   const [paquetes, setPaquetes] = useState<Paquete[]>(INITIAL_PAQUETES);
   const [searchTerm, setSearchTerm] = useState('');
@@ -263,6 +317,72 @@ export default function DashboardPage() {
     p.trackingUsa.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  if (!isLoggedIn) {
+    return (
+      <div style={{ position: 'fixed', inset: 0, backgroundColor: '#0f172a', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px', zIndex: 9999 }}>
+        <div style={{ backgroundColor: '#ffffff', width: '100%', maxWidth: '420px', borderRadius: '16px', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)', overflow: 'hidden', border: '1px solid #e2e8f0' }}>
+          {/* Brand Header */}
+          <div style={{ backgroundColor: '#020617', padding: '28px 24px', textAlign: 'center', borderBottom: '2px solid #2563eb' }}>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
+              <span className="sap-logo-badge" style={{ fontSize: '14px', padding: '6px 12px' }}>ERP</span>
+              <h2 style={{ color: '#ffffff', fontSize: '20px', fontWeight: 800, margin: 0 }}>AMEX COURIER</h2>
+            </div>
+            <p style={{ color: '#94a3b8', fontSize: '13px', margin: 0 }}>Sistema Logístico Integrado de Casilleros</p>
+          </div>
+
+          {/* Form Body */}
+          <form onSubmit={handleLoginSubmit} style={{ padding: '28px 24px' }}>
+            <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a', marginBottom: '18px', textAlign: 'center' }}>Iniciar Sesión en el Sistema</h3>
+
+            {loginError && (
+              <div style={{ backgroundColor: '#fee2e2', border: '1px solid #f87171', color: '#dc2626', padding: '10px 14px', borderRadius: '8px', fontSize: '12.5px', marginBottom: '16px', fontWeight: 600 }}>
+                {loginError}
+              </div>
+            )}
+
+            <div style={{ marginBottom: '16px' }}>
+              <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#475569', marginBottom: '6px', textTransform: 'uppercase' }}>Usuario / Email</label>
+              <input
+                type="text"
+                required
+                value={loginUser.usuario}
+                onChange={e => setLoginUser({ ...loginUser, usuario: e.target.value })}
+                style={{ width: '100%', height: '44px', padding: '0 14px', border: '1px solid #cbd5e1', borderRadius: '8px', fontSize: '14px', fontWeight: 600, outline: 'none' }}
+                placeholder="admin"
+              />
+            </div>
+
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#475569', marginBottom: '6px', textTransform: 'uppercase' }}>Contraseña</label>
+              <input
+                type="password"
+                required
+                value={loginUser.password}
+                onChange={e => setLoginUser({ ...loginUser, password: e.target.value })}
+                style={{ width: '100%', height: '44px', padding: '0 14px', border: '1px solid #cbd5e1', borderRadius: '8px', fontSize: '14px', fontWeight: 600, outline: 'none' }}
+                placeholder="••••••••"
+              />
+            </div>
+
+            <div style={{ backgroundColor: '#f1f5f9', padding: '10px 14px', borderRadius: '8px', fontSize: '11.5px', color: '#475569', marginBottom: '20px', border: '1px solid #e2e8f0' }}>
+              <div><strong>Credenciales Oficiales Supabase:</strong></div>
+              <div style={{ fontFamily: 'JetBrains Mono', marginTop: '4px' }}>
+                <span style={{ color: '#2563eb', fontWeight: 700 }}>🔑 Usuario:</span> admin | <span style={{ color: '#059669', fontWeight: 700 }}>🔒 Clave:</span> admin123
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              style={{ width: '100%', height: '46px', backgroundColor: '#2563eb', color: '#ffffff', border: 'none', borderRadius: '10px', fontSize: '14px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', boxShadow: '0 4px 12px rgba(37, 99, 235, 0.3)' }}
+            >
+              <i className="fa-solid fa-right-to-bracket"></i> Ingresar al Sistema ERP
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', width: '100vw', overflow: 'hidden' }}>
       {/* ─── HEADER BAR ORIGINAL SAP UI ────────────────────────────────────────── */}
@@ -291,14 +411,18 @@ export default function DashboardPage() {
           <span>Amex Courier | Sistema Logístico Integrado</span>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: 'rgba(255,255,255,0.08)', padding: '4px 12px', borderRadius: '20px', fontSize: '12px', color: '#f8fafc' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(255,255,255,0.08)', padding: '4px 12px', borderRadius: '20px', fontSize: '12px', color: '#f8fafc' }}>
             <i className="fa-solid fa-user-circle" style={{ fontSize: '16px', color: '#38bdf8' }}></i>
-            <span><strong>Administrador</strong> (<span style={{ color: '#cbd5e1' }}>Admin General</span>)</span>
+            <span><strong>{currentUser?.nombre || 'Administrador'}</strong> (<span style={{ color: '#cbd5e1' }}>{currentUser?.rol || 'admin'}</span>)</span>
           </div>
-          <span className="sap-sys-badge"><i className="fa-solid fa-circle" style={{ fontSize: '8px' }}></i> Sistema En Línea</span>
-          <button style={{ padding: '4px 10px', fontSize: '12px', background: '#dc2626', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer' }}>
-            <i className="fa-solid fa-right-from-bracket"></i> Salir
+
+          <button
+            onClick={handleLogout}
+            style={{ padding: '6px 12px', background: 'rgba(239, 68, 68, 0.2)', border: '1px solid rgba(239, 68, 68, 0.4)', color: '#f87171', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+            title="Cerrar Sesión"
+          >
+            <i className="fa-solid fa-arrow-right-from-bracket"></i> Salir
           </button>
         </div>
       </header>
