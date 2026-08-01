@@ -470,3 +470,21 @@ tr:hover { background: #f8fafc !important; }
     pointer-events: none;
   }
 }
+
+/* Fix Escáner Cámara Vídeo 100% Cobertura Sin Franjas Negras */
+#qr-reader-viewport {
+  width: 100% !important;
+  height: 100% !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  overflow: hidden !important;
+}
+
+#qr-reader-viewport video {
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 320px !important;
+  object-fit: cover !important;
+  border-radius: 8px !important;
+}

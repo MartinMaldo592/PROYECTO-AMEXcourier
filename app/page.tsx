@@ -408,7 +408,7 @@ export default function DashboardPage() {
             <i className="fa-solid fa-bars"></i>
           </button>
           <span className="sap-logo-badge">ERP</span>
-          <span>Amex Courier | Sistema Logístico Integrado</span>
+          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '180px' }}>Amex Courier</span>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>

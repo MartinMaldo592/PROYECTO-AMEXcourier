@@ -82,11 +82,10 @@ export default function MobileScannerModal({ isOpen, onClose, onScan, isInline =
             height: Math.floor(vfHeight * 0.96)
           };
         },
-        aspectRatio: 1.777778,
         videoConstraints: {
           facingMode: { ideal: "environment" },
-          width: { ideal: 1920, min: 1280 },
-          height: { ideal: 1080, min: 720 },
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
           frameRate: { ideal: 30 },
           focusMode: "continuous"
         },
