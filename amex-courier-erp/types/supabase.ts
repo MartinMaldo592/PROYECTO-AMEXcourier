@@ -9,307 +9,307 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      customers: {
+      clientes: {
         Row: {
-          created_at: string | null
-          delivery_address: string | null
-          department: string | null
-          destination_agency: string | null
-          district: string | null
-          dni_back_url: string | null
-          dni_front_url: string | null
+          agencia_destino: string | null
+          codigo_casillero: string
+          creado_en: string | null
+          departamento: string | null
+          direccion_entrega: string | null
+          distrito: string | null
+          dni_frontal_url: string | null
+          dni_reverso_url: string | null
+          documento_identidad: string
           email: string | null
           id: string
-          locker_code: string
-          name: string
-          phone: string | null
-          preferred_carrier: string | null
-          province: string | null
-          tax_id: string
+          nombre: string
+          provincia: string | null
+          telefono: string | null
+          transportista_preferido: string | null
         }
         Insert: {
-          created_at?: string | null
-          delivery_address?: string | null
-          department?: string | null
-          destination_agency?: string | null
-          district?: string | null
-          dni_back_url?: string | null
-          dni_front_url?: string | null
+          agencia_destino?: string | null
+          codigo_casillero: string
+          creado_en?: string | null
+          departamento?: string | null
+          direccion_entrega?: string | null
+          distrito?: string | null
+          dni_frontal_url?: string | null
+          dni_reverso_url?: string | null
+          documento_identidad: string
           email?: string | null
           id?: string
-          locker_code: string
-          name: string
-          phone?: string | null
-          preferred_carrier?: string | null
-          province?: string | null
-          tax_id: string
+          nombre: string
+          provincia?: string | null
+          telefono?: string | null
+          transportista_preferido?: string | null
         }
         Update: {
-          created_at?: string | null
-          delivery_address?: string | null
-          department?: string | null
-          destination_agency?: string | null
-          district?: string | null
-          dni_back_url?: string | null
-          dni_front_url?: string | null
+          agencia_destino?: string | null
+          codigo_casillero?: string
+          creado_en?: string | null
+          departamento?: string | null
+          direccion_entrega?: string | null
+          distrito?: string | null
+          dni_frontal_url?: string | null
+          dni_reverso_url?: string | null
+          documento_identidad?: string
           email?: string | null
           id?: string
-          locker_code?: string
-          name?: string
-          phone?: string | null
-          preferred_carrier?: string | null
-          province?: string | null
-          tax_id?: string
+          nombre?: string
+          provincia?: string | null
+          telefono?: string | null
+          transportista_preferido?: string | null
         }
         Relationships: []
       }
-      import_orders: {
+      embarques_master: {
         Row: {
-          admin_fee_usd: number | null
-          created_at: string | null
-          customer_name: string
-          freight_amount_usd: number | null
+          almacen_destino: string | null
+          almacen_origen: string | null
+          codigo_guia_master: string
+          creado_en: string | null
+          despachado_miami_en: string | null
+          estado: string | null
           id: string
-          is_paid: boolean | null
-          locker_code: string
-          package_id: string | null
-          paid_amount: number | null
-          paid_at: string | null
-          payment_currency: string | null
-          payment_method: string | null
-          payment_proof_url: string | null
-          payment_reference: string | null
-          total_amount_usd: number | null
+          notas: string | null
+          recibido_peru_en: string | null
+          referencia_socio: string | null
         }
         Insert: {
-          admin_fee_usd?: number | null
-          created_at?: string | null
-          customer_name: string
-          freight_amount_usd?: number | null
+          almacen_destino?: string | null
+          almacen_origen?: string | null
+          codigo_guia_master: string
+          creado_en?: string | null
+          despachado_miami_en?: string | null
+          estado?: string | null
           id?: string
-          is_paid?: boolean | null
-          locker_code: string
-          package_id?: string | null
-          paid_amount?: number | null
-          paid_at?: string | null
-          payment_currency?: string | null
-          payment_method?: string | null
-          payment_proof_url?: string | null
-          payment_reference?: string | null
-          total_amount_usd?: number | null
+          notas?: string | null
+          recibido_peru_en?: string | null
+          referencia_socio?: string | null
         }
         Update: {
-          admin_fee_usd?: number | null
-          created_at?: string | null
-          customer_name?: string
-          freight_amount_usd?: number | null
+          almacen_destino?: string | null
+          almacen_origen?: string | null
+          codigo_guia_master?: string
+          creado_en?: string | null
+          despachado_miami_en?: string | null
+          estado?: string | null
           id?: string
-          is_paid?: boolean | null
-          locker_code?: string
-          package_id?: string | null
-          paid_amount?: number | null
-          paid_at?: string | null
-          payment_currency?: string | null
-          payment_method?: string | null
-          payment_proof_url?: string | null
-          payment_reference?: string | null
-          total_amount_usd?: number | null
+          notas?: string | null
+          recibido_peru_en?: string | null
+          referencia_socio?: string | null
+        }
+        Relationships: []
+      }
+      historial_trazabilidad: {
+        Row: {
+          descripcion_evento: string
+          fecha_hora: string | null
+          id: string
+          paquete_id: string | null
+          ubicacion: string
+          usuario_operador: string | null
+        }
+        Insert: {
+          descripcion_evento: string
+          fecha_hora?: string | null
+          id?: string
+          paquete_id?: string | null
+          ubicacion: string
+          usuario_operador?: string | null
+        }
+        Update: {
+          descripcion_evento?: string
+          fecha_hora?: string | null
+          id?: string
+          paquete_id?: string | null
+          ubicacion?: string
+          usuario_operador?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "import_orders_package_id_fkey"
-            columns: ["package_id"]
+            foreignKeyName: "historial_trazabilidad_paquete_id_fkey"
+            columns: ["paquete_id"]
             isOneToOne: false
-            referencedRelation: "packages"
+            referencedRelation: "paquetes"
             referencedColumns: ["id"]
           },
         ]
       }
-      package_tracking_logs: {
+      ordenes_liquidacion: {
         Row: {
-          event_description: string
+          cargo_admin_usd: number | null
+          codigo_casillero: string
+          comprobante_pago_url: string | null
+          creado_en: string | null
+          esta_pagado: boolean | null
           id: string
-          location: string
-          operator_username: string | null
-          package_id: string | null
-          timestamp: string | null
+          metodo_pago: string | null
+          moneda_pago: string | null
+          monto_flete_usd: number | null
+          monto_pagado: number | null
+          monto_total_usd: number | null
+          nombre_cliente: string
+          pagado_en: string | null
+          paquete_id: string | null
+          referencia_pago: string | null
         }
         Insert: {
-          event_description: string
+          cargo_admin_usd?: number | null
+          codigo_casillero: string
+          comprobante_pago_url?: string | null
+          creado_en?: string | null
+          esta_pagado?: boolean | null
           id?: string
-          location: string
-          operator_username?: string | null
-          package_id?: string | null
-          timestamp?: string | null
+          metodo_pago?: string | null
+          moneda_pago?: string | null
+          monto_flete_usd?: number | null
+          monto_pagado?: number | null
+          monto_total_usd?: number | null
+          nombre_cliente: string
+          pagado_en?: string | null
+          paquete_id?: string | null
+          referencia_pago?: string | null
         }
         Update: {
-          event_description?: string
+          cargo_admin_usd?: number | null
+          codigo_casillero?: string
+          comprobante_pago_url?: string | null
+          creado_en?: string | null
+          esta_pagado?: boolean | null
           id?: string
-          location?: string
-          operator_username?: string | null
-          package_id?: string | null
-          timestamp?: string | null
+          metodo_pago?: string | null
+          moneda_pago?: string | null
+          monto_flete_usd?: number | null
+          monto_pagado?: number | null
+          monto_total_usd?: number | null
+          nombre_cliente?: string
+          pagado_en?: string | null
+          paquete_id?: string | null
+          referencia_pago?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "package_tracking_logs_package_id_fkey"
-            columns: ["package_id"]
+            foreignKeyName: "ordenes_liquidacion_paquete_id_fkey"
+            columns: ["paquete_id"]
             isOneToOne: false
-            referencedRelation: "packages"
+            referencedRelation: "paquetes"
             referencedColumns: ["id"]
           },
         ]
       }
-      packages: {
+      paquetes: {
         Row: {
-          created_at: string | null
-          current_location: string | null
-          customer_id: string | null
-          customs_consignee_name: string | null
-          customs_dni: string | null
-          declared_value_usd: number | null
-          delivery_method: string | null
-          delivery_status: string | null
-          description: string | null
+          cliente_id: string | null
+          codigo_casillero: string
+          creado_en: string | null
+          descripcion: string | null
+          dni_consignatario: string | null
+          embarque_id: string | null
+          estado_entrega: string | null
+          factura_pdf_url: string | null
           id: string
-          invoice_number: string | null
-          invoice_pdf_url: string | null
-          locker_code: string
-          package_type: string | null
-          shipment_id: string | null
+          metodo_entrega: string | null
+          nombre_consignatario: string | null
+          numero_factura: string | null
+          numero_recibo_bodega: string
+          peso_kg: number | null
+          tipo_empaque: string | null
           tracking_usa: string
-          warehouse_receipt_number: string
-          weight_kg: number | null
+          ubicacion_actual: string | null
+          valor_declarado_usd: number | null
         }
         Insert: {
-          created_at?: string | null
-          current_location?: string | null
-          customer_id?: string | null
-          customs_consignee_name?: string | null
-          customs_dni?: string | null
-          declared_value_usd?: number | null
-          delivery_method?: string | null
-          delivery_status?: string | null
-          description?: string | null
+          cliente_id?: string | null
+          codigo_casillero: string
+          creado_en?: string | null
+          descripcion?: string | null
+          dni_consignatario?: string | null
+          embarque_id?: string | null
+          estado_entrega?: string | null
+          factura_pdf_url?: string | null
           id?: string
-          invoice_number?: string | null
-          invoice_pdf_url?: string | null
-          locker_code: string
-          package_type?: string | null
-          shipment_id?: string | null
+          metodo_entrega?: string | null
+          nombre_consignatario?: string | null
+          numero_factura?: string | null
+          numero_recibo_bodega: string
+          peso_kg?: number | null
+          tipo_empaque?: string | null
           tracking_usa: string
-          warehouse_receipt_number: string
-          weight_kg?: number | null
+          ubicacion_actual?: string | null
+          valor_declarado_usd?: number | null
         }
         Update: {
-          created_at?: string | null
-          current_location?: string | null
-          customer_id?: string | null
-          customs_consignee_name?: string | null
-          customs_dni?: string | null
-          declared_value_usd?: number | null
-          delivery_method?: string | null
-          delivery_status?: string | null
-          description?: string | null
+          cliente_id?: string | null
+          codigo_casillero?: string
+          creado_en?: string | null
+          descripcion?: string | null
+          dni_consignatario?: string | null
+          embarque_id?: string | null
+          estado_entrega?: string | null
+          factura_pdf_url?: string | null
           id?: string
-          invoice_number?: string | null
-          invoice_pdf_url?: string | null
-          locker_code?: string
-          package_type?: string | null
-          shipment_id?: string | null
+          metodo_entrega?: string | null
+          nombre_consignatario?: string | null
+          numero_factura?: string | null
+          numero_recibo_bodega?: string
+          peso_kg?: number | null
+          tipo_empaque?: string | null
           tracking_usa?: string
-          warehouse_receipt_number?: string
-          weight_kg?: number | null
+          ubicacion_actual?: string | null
+          valor_declarado_usd?: number | null
         }
         Relationships: [
           {
-            foreignKeyName: "packages_customer_id_fkey"
-            columns: ["customer_id"]
+            foreignKeyName: "paquetes_cliente_id_fkey"
+            columns: ["cliente_id"]
             isOneToOne: false
-            referencedRelation: "customers"
+            referencedRelation: "clientes"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "packages_shipment_id_fkey"
-            columns: ["shipment_id"]
+            foreignKeyName: "paquetes_embarque_id_fkey"
+            columns: ["embarque_id"]
             isOneToOne: false
-            referencedRelation: "shipments"
+            referencedRelation: "embarques_master"
             referencedColumns: ["id"]
           },
         ]
       }
-      shipments: {
+      usuarios: {
         Row: {
-          created_at: string | null
-          destination_warehouse: string | null
-          dispatched_from_miami_at: string | null
+          activo: boolean | null
+          creado_en: string | null
+          email: string
           id: string
-          master_guide_code: string
-          notes: string | null
-          origin_warehouse: string | null
-          partner_ref_number: string | null
-          received_in_peru_at: string | null
-          status: string | null
+          nombre_completo: string
+          password_hash: string
+          permisos_personalizados: string | null
+          rol: string
+          usuario: string
         }
         Insert: {
-          created_at?: string | null
-          destination_warehouse?: string | null
-          dispatched_from_miami_at?: string | null
+          activo?: boolean | null
+          creado_en?: string | null
+          email: string
           id?: string
-          master_guide_code: string
-          notes?: string | null
-          origin_warehouse?: string | null
-          partner_ref_number?: string | null
-          received_in_peru_at?: string | null
-          status?: string | null
+          nombre_completo: string
+          password_hash: string
+          permisos_personalizados?: string | null
+          rol: string
+          usuario: string
         }
         Update: {
-          created_at?: string | null
-          destination_warehouse?: string | null
-          dispatched_from_miami_at?: string | null
-          id?: string
-          master_guide_code?: string
-          notes?: string | null
-          origin_warehouse?: string | null
-          partner_ref_number?: string | null
-          received_in_peru_at?: string | null
-          status?: string | null
-        }
-        Relationships: []
-      }
-      users: {
-        Row: {
-          created_at: string | null
-          custom_permissions: string | null
-          email: string
-          full_name: string
-          id: string
-          is_active: boolean | null
-          password_hash: string
-          role_name: string
-          username: string
-        }
-        Insert: {
-          created_at?: string | null
-          custom_permissions?: string | null
-          email: string
-          full_name: string
-          id?: string
-          is_active?: boolean | null
-          password_hash: string
-          role_name: string
-          username: string
-        }
-        Update: {
-          created_at?: string | null
-          custom_permissions?: string | null
+          activo?: boolean | null
+          creado_en?: string | null
           email?: string
-          full_name?: string
           id?: string
-          is_active?: boolean | null
+          nombre_completo?: string
           password_hash?: string
-          role_name?: string
-          username?: string
+          permisos_personalizados?: string | null
+          rol?: string
+          usuario?: string
         }
         Relationships: []
       }
