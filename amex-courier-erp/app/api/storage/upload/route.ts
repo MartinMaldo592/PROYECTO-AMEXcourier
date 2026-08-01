@@ -5,7 +5,7 @@ export async function POST(req: NextRequest) {
   try {
     const formData = await req.formData();
     const file = formData.get('file') as File | null;
-    const folder = (formData.get('folder') as string) || 'invoices';
+    const folder = (formData.get('folder') as string) || 'facturas';
 
     if (!file) {
       return NextResponse.json({ error: 'No se envió ningún archivo.' }, { status: 400 });
@@ -15,17 +15,17 @@ export async function POST(req: NextRequest) {
     const buffer = Buffer.from(arrayBuffer);
     const timeStamp = Date.now();
     const sanitizedName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
-    const key = `${folder}/${timeStamp}_${sanitizedName}`;
+    const subPath = `${folder}/${timeStamp}_${sanitizedName}`;
 
-    const publicUrl = await uploadFileToR2(buffer, key, file.type);
+    const { url, key } = await uploadFileToR2(buffer, subPath, file.type);
 
     return NextResponse.json({
       success: true,
-      url: publicUrl,
+      url,
       key
     });
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Error al subir archivo a R2';
+    const message = err instanceof Error ? err.message : 'Error al subir archivo a Cloudflare R2';
     console.error('[R2 Upload Error]', err);
     return NextResponse.json({ error: message }, { status: 500 });
   }
