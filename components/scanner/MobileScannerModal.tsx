@@ -1,13 +1,14 @@
 'use client';
 
 import React, { useEffect, useState, useRef } from 'react';
-import { Camera, VideoOff, Barcode, Volume2, ShieldCheck, X, Copy, Check, RotateCcw, Zap } from 'lucide-react';
+import { CheckCircle2, RotateCcw, Zap } from 'lucide-react';
 import { Html5Qrcode, Html5QrcodeSupportedFormats, Html5QrcodeScannerState } from 'html5-qrcode';
 
 interface MobileScannerModalProps {
   isOpen: boolean;
   onClose: () => void;
   onScan: (decodedText: string, format: string) => void;
+  onConfirm?: (decodedText: string, format: string) => void;
   isInline?: boolean;
 }
 
@@ -16,15 +17,18 @@ interface ScanLog {
   code: string;
   format: string;
   time: string;
+  confirmed: boolean;
 }
 
-export default function MobileScannerModal({ isOpen, onClose, onScan, isInline = false }: MobileScannerModalProps) {
+export default function MobileScannerModal({ isOpen, onClose, onScan, onConfirm, isInline = false }: MobileScannerModalProps) {
   const [isScanning, setIsScanning] = useState(false);
   const [backCameras, setBackCameras] = useState<{ id: string; label: string }[]>([]);
   const [selectedCamera, setSelectedCamera] = useState<string>('');
   const [scanHistory, setScanHistory] = useState<ScanLog[]>([]);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [pendingScan, setPendingScan] = useState<{ code: string; format: string } | null>(null);
   const scannerRef = useRef<Html5Qrcode | null>(null);
+  const resumeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const playScanBeep = () => {
     try {
@@ -46,6 +50,36 @@ export default function MobileScannerModal({ isOpen, onClose, onScan, isInline =
     if (typeof navigator !== 'undefined' && navigator.vibrate) {
       navigator.vibrate([90, 45, 90]);
     }
+  };
+
+  const freezeScanner = async () => {
+    if (scannerRef.current) {
+      try {
+        scannerRef.current.pause(true);
+        return;
+      } catch {
+        // fallback: detener cámara por completo
+      }
+      try {
+        await scannerRef.current.stop().catch(() => {});
+      } catch {
+        // silent
+      }
+    }
+  };
+
+  const resumeScanner = async () => {
+    if (scannerRef.current) {
+      try {
+        if (scannerRef.current.getState() === Html5QrcodeScannerState.PAUSED) {
+          scannerRef.current.resume();
+          return;
+        }
+      } catch {
+        // fallback
+      }
+    }
+    await startCamera();
   };
 
   const startCamera = async () => {
@@ -92,15 +126,8 @@ export default function MobileScannerModal({ isOpen, onClose, onScan, isInline =
         const formatName = result?.result?.format?.formatName || 'CODE_128';
         onScan(decodedText, formatName);
 
-        setScanHistory(prev => [
-          {
-            id: Math.random().toString(),
-            code: decodedText,
-            format: formatName,
-            time: new Date().toLocaleTimeString()
-          },
-          ...prev.filter(item => item.code !== decodedText).slice(0, 5)
-        ]);
+        setPendingScan({ code: decodedText, format: formatName });
+        freezeScanner();
       };
 
       try {
@@ -164,6 +191,7 @@ export default function MobileScannerModal({ isOpen, onClose, onScan, isInline =
       return () => {
         isMounted = false;
         clearTimeout(timer);
+        if (resumeTimerRef.current) clearTimeout(resumeTimerRef.current);
         stopCamera();
       };
     } else {
@@ -177,6 +205,30 @@ export default function MobileScannerModal({ isOpen, onClose, onScan, isInline =
       setCopiedId(id);
       setTimeout(() => setCopiedId(null), 2000);
     }
+  };
+
+  const handleConfirmScan = () => {
+    if (!pendingScan) return;
+    onConfirm?.(pendingScan.code, pendingScan.format);
+    setScanHistory(prev => [
+      {
+        id: Math.random().toString(),
+        code: pendingScan.code,
+        format: pendingScan.format,
+        time: new Date().toLocaleTimeString(),
+        confirmed: true
+      },
+      ...prev.filter(item => item.code !== pendingScan.code).slice(0, 5)
+    ]);
+    setPendingScan(null);
+    if (resumeTimerRef.current) clearTimeout(resumeTimerRef.current);
+    resumeTimerRef.current = setTimeout(() => resumeScanner(), 300);
+  };
+
+  const handleReScan = () => {
+    setPendingScan(null);
+    if (resumeTimerRef.current) clearTimeout(resumeTimerRef.current);
+    resumeTimerRef.current = setTimeout(() => resumeScanner(), 300);
   };
 
   if (!isOpen) return null;
@@ -263,7 +315,53 @@ export default function MobileScannerModal({ isOpen, onClose, onScan, isInline =
           </div>
         )}
 
-        {!isScanning && (
+        {pendingScan && (
+          <div style={{ position: 'absolute', inset: 0, zIndex: 30, backgroundColor: 'rgba(2, 6, 23, 0.88)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+            <div style={{ width: '100%', maxWidth: '420px', background: '#ffffff', borderRadius: '14px', padding: '22px 20px', boxShadow: '0 20px 50px rgba(0,0,0,0.55)', border: '2px solid #22c55e', textAlign: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginBottom: '10px' }}>
+                <CheckCircle2 className="w-5 h-5 text-green-600" />
+                <span style={{ fontSize: '13px', fontWeight: 800, color: '#16a34a', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Código Escaneado</span>
+              </div>
+              <div style={{ fontSize: '11px', color: '#64748b', fontWeight: 700, marginBottom: '4px' }}>TEXTO EXTRAÍDO DE LA GUÍA</div>
+              <div
+                style={{
+                  fontFamily: 'JetBrains Mono, monospace',
+                  fontSize: '20px',
+                  fontWeight: 800,
+                  color: '#0f172a',
+                  background: '#f1f5f9',
+                  border: '1px dashed #94a3b8',
+                  borderRadius: '10px',
+                  padding: '14px 12px',
+                  wordBreak: 'break-all',
+                  marginBottom: '6px'
+                }}
+              >
+                {pendingScan.code}
+              </div>
+              <div style={{ fontSize: '11.5px', color: '#64748b', fontWeight: 600, marginBottom: '16px' }}>Formato: <span style={{ fontFamily: 'JetBrains Mono', color: '#2563eb', fontWeight: 800 }}>{pendingScan.format}</span></div>
+
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <button
+                  onClick={handleConfirmScan}
+                  className="btn"
+                  style={{ flex: 1, height: '46px', justifyContent: 'center', fontSize: '13px', background: '#16a34a', color: '#ffffff', fontWeight: 800, borderRadius: '10px', boxShadow: '0 4px 12px rgba(22,163,74,0.3)' }}
+                >
+                  <i className="fa-solid fa-check"></i> Confirmar y Guardar
+                </button>
+                <button
+                  onClick={handleReScan}
+                  className="btn btn-secondary"
+                  style={{ height: '46px', padding: '0 18px', justifyContent: 'center', fontSize: '13px', fontWeight: 700, borderRadius: '10px' }}
+                >
+                  <RotateCcw className="w-4 h-4" /> Reescanear
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {!isScanning && !pendingScan && (
           <div style={{ textAlign: 'center', padding: '36px 16px', color: '#94a3b8' }}>
             <i className="fa-solid fa-camera" style={{ fontSize: '42px', color: '#2563eb', marginBottom: '14px' }}></i>
             <p style={{ fontWeight: 800, color: '#0f172a', fontSize: '15px', margin: 0 }}>Cámara Trasera CODE_128 en Espera</p>
@@ -325,7 +423,12 @@ export default function MobileScannerModal({ isOpen, onClose, onScan, isInline =
                 style={{ padding: '8px 12px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '12.5px' }}
               >
                 <div>
-                  <div style={{ fontFamily: 'JetBrains Mono', fontWeight: 800, color: '#2563eb' }}>{item.code}</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ fontFamily: 'JetBrains Mono', fontWeight: 800, color: '#2563eb' }}>{item.code}</span>
+                    {item.confirmed && (
+                      <span style={{ background: '#d1fae5', color: '#047857', fontSize: '9.5px', fontWeight: 800, padding: '2px 8px', borderRadius: '10px', textTransform: 'uppercase' }}>Confirmado</span>
+                    )}
+                  </div>
                   <div style={{ fontSize: '10.5px', color: '#64748b' }}>{item.format} • {item.time}</div>
                 </div>
                 <button

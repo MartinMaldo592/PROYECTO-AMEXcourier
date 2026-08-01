@@ -311,6 +311,10 @@ export default function DashboardPage() {
     setScannedLogs(prev => [{ code, format, time: new Date().toLocaleTimeString() }, ...prev]);
   };
 
+  const handleConfirmScan = (code: string, format: string) => {
+    setScannedLogs(prev => [{ code, format, time: new Date().toLocaleTimeString() }, ...prev]);
+  };
+
   const filteredPaquetes = paquetes.filter(p =>
     p.numeroReciboBodega.toLowerCase().includes(searchTerm.toLowerCase()) ||
     p.codigoCasillero.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -852,7 +856,48 @@ export default function DashboardPage() {
                 isInline={true}
                 onClose={() => {}}
                 onScan={handleScanCode}
+                onConfirm={handleConfirmScan}
               />
+
+              <div className="card-panel" style={{ marginTop: '18px' }}>
+                <div style={{ padding: '16px 20px', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <h3 style={{ fontSize: '15px', fontWeight: 800 }}>
+                    <i className="fa-solid fa-circle-check" style={{ color: '#16a34a', marginRight: '8px' }}></i> Códigos Confirmados
+                  </h3>
+                  <span style={{ background: '#d1fae5', color: '#047857', padding: '4px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: 800 }}>
+                    {scannedLogs.length} registrado{scannedLogs.length === 1 ? '' : 's'}
+                  </span>
+                </div>
+                {scannedLogs.length > 0 ? (
+                  <div className="table-responsive">
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>#</th>
+                          <th>Código Extraído</th>
+                          <th>Formato</th>
+                          <th>Hora</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {scannedLogs.map((log, i) => (
+                          <tr key={`${log.code}-${i}`}>
+                            <td style={{ color: '#94a3b8', fontWeight: 700 }}>{i + 1}</td>
+                            <td style={{ fontFamily: 'JetBrains Mono', fontWeight: 800, color: '#2563eb' }}>{log.code}</td>
+                            <td><span className="badge badge-type">{log.format}</span></td>
+                            <td style={{ fontFamily: 'JetBrains Mono' }}>{log.time}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <div style={{ padding: '28px 20px', textAlign: 'center', color: '#94a3b8', fontSize: '13px' }}>
+                    <i className="fa-solid fa-barcode" style={{ fontSize: '28px', marginBottom: '10px', color: '#cbd5e1', display: 'block' }}></i>
+                    Aún no se han confirmado códigos. Escanea una guía CODE_128 y presiona "Confirmar y Guardar".
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </main>
