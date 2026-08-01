@@ -420,3 +420,53 @@ tr:hover { background: #f8fafc !important; }
   gap: 12px;
   flex-shrink: 0;
 }
+
+/* Mobile Responsive Optimizations */
+@media (max-width: 768px) {
+  .sap-header {
+    padding: 0 12px;
+    height: 52px;
+  }
+  .sap-brand {
+    font-size: 14px;
+    gap: 8px;
+  }
+  .sap-sys-badge {
+    display: none;
+  }
+  .main-content {
+    padding: 16px 12px;
+  }
+  .page-title-bar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .kpi-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .kpi-card {
+    padding: 12px;
+  }
+  .kpi-info .kpi-value {
+    font-size: 18px;
+  }
+  .table-responsive {
+    -webkit-overflow-scrolling: touch;
+  }
+  .sap-sidebar {
+    position: fixed;
+    top: 52px;
+    bottom: 0;
+    left: 0;
+    z-index: 500;
+    box-shadow: 10px 0 25px rgba(0,0,0,0.5);
+  }
+  .sap-sidebar.collapsed {
+    transform: translateX(-100%);
+    width: 280px;
+    opacity: 0;
+    pointer-events: none;
+  }
+}

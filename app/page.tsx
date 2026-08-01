@@ -357,7 +357,7 @@ export default function DashboardPage() {
                   <div className="nav-item-left"><i className="fa-solid fa-store"></i> 3. Almacén Sede Lince</div>
                 </div>
                 <div className={`nav-item ${activeTab === 'mobile-scanner' ? 'active' : ''}`} onClick={() => setIsScannerOpen(true)}>
-                  <div className="nav-item-left"><i className="fa-solid fa-qrcode" style={{ color: '#38bdf8' }}></i> 📱 Escáner Móvil QR & Barras</div>
+                  <div className="nav-item-left"><i className="fa-solid fa-barcode" style={{ color: '#38bdf8' }}></i> 📱 Escáner de Códigos de Barras</div>
                 </div>
               </div>
             )}
