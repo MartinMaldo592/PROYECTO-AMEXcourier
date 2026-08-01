@@ -5,79 +5,70 @@ import MobileScannerModal from '@/components/scanner/MobileScannerModal';
 import { Paquete, Cliente } from '@/types';
 import { supabase } from '@/lib/supabase/client';
 
-const INITIAL_CLIENTES: Cliente[] = [
-  {
-    id: 'c-1',
-    codigoCasillero: 'AMEX-PER-1001',
-    nombre: 'María Torres Pérez',
-    documentoIdentidad: '72819204',
-    telefono: '+51 987654321',
-    email: 'mtorres@gmail.com',
-    departamento: 'LAMBAYEQUE',
-    provincia: 'CHICLAYO',
-    distrito: 'CHICLAYO CENTRO',
-    direccionEntrega: 'Av. Balta 456, Int. 201',
-    transportistaPreferido: 'SHALOM',
-    agenciaDestino: 'SHALOM - CHICLAYO CENTRO',
-    dniFrontalUrl: 'https://pub-dcb2789e802043768fa5c6c649f9c405.r2.dev/FOLDER%20AMEX/dnis/72819204_front.jpg',
-    dniReversoUrl: 'https://pub-dcb2789e802043768fa5c6c649f9c405.r2.dev/FOLDER%20AMEX/dnis/72819204_back.jpg',
-    creadoEn: '2026-08-01T10:00:00Z'
-  },
-  {
-    id: 'c-2',
-    codigoCasillero: 'AMEX-PER-1002',
-    nombre: 'Carlos Mendoza Ramos',
-    documentoIdentidad: '10452399121',
-    telefono: '+51 912345678',
-    email: 'cmendoza@outlook.com',
-    departamento: 'LIMA',
-    provincia: 'LIMA',
-    distrito: 'LINCE',
-    direccionEntrega: 'Av. Arequipa 1850',
-    transportistaPreferido: 'CARRO AMEX',
-    agenciaDestino: 'REPARTO DOMICILIO LINCE',
-    creadoEn: '2026-08-01T10:15:00Z'
-  }
+const DNI_FRONT_URL = "https://pub-dcb2789e802043768fa5c6c649f9c405.r2.dev/FOLDER%20AMEX/dnis/Dni_anverso.jpeg";
+const DNI_BACK_URL = "https://pub-dcb2789e802043768fa5c6c649f9c405.r2.dev/FOLDER%20AMEX/dnis/Dni_reverso.jpeg";
+const ORDER_PDF_URL = "https://pub-dcb2789e802043768fa5c6c649f9c405.r2.dev/FOLDER%20AMEX/facturas/Order_Details.pdf";
+
+const NOMBRES = ["María", "Carlos", "Juan", "Ana", "Luis", "Rosa", "Pedro", "Lucía", "Diego", "Carmen", "Jorge", "Patricia", "Fernando", "Sofía", "Gabriel", "Elena", "Ronaldo", "Valeria", "Mateo", "Camila"];
+const APELLIDOS = ["Torres", "Pérez", "Mendoza", "Ramos", "García", "Flores", "Rodríguez", "Sánchez", "Gómez", "Díaz", "Vásquez", "Castro", "Romero", "Alvarez", "Gutierrez", "Navarro", "Salazar", "Castillo", "Vargas", "Guerrero"];
+const DEPARTAMENTOS = ["LIMA", "LAMBAYEQUE", "LA LIBERTAD", "AREQUIPA", "CUSCO", "PIURA", "JUNIN", "ICA", "ANCASH", "HUANUCO"];
+const PROVINCIAS = ["LIMA", "CHICLAYO", "TRUJILLO", "AREQUIPA", "CUSCO", "PIURA", "HUANCAYO", "ICA", "SANTA", "HUANUCO"];
+const DISTRITOS = ["LINCE", "MIRAFLORES", "CHICLAYO CENTRO", "VICTOR LARCO", "YANAHUARA", "SAN ISIDRO", "EL TAMBO", "SURCO", "NUEVO CHIMBOTE", "AMARILIS"];
+const CARRIERS = ["CARRO AMEX", "SHALOM", "OLVA COURIER", "MARVISUR", "CARRO AMEX"];
+const PRODUCTOS = [
+  "Ropa y calzado deportivo Nike", "Lote de componentes electrónicos", "Laptop Dell XPS 15 reacondicionada", "Repuestos automotrices Toyota", "Cosméticos y cremas hidratantes",
+  "Smartwatch Apple Watch Series 9", "Zapatillas Adidas Ultraboost", "Suplementos alimenticios Whey Gold", "Juguetes educativos e impresos", "Accesorios fotográficos Sony Alpha",
+  "Ropa de bebé y textiles pima", "Audífonos Inalámbricos Bose QC45", "Herramientas manuales DeWalt", "Teclados mecánicos gaming Logitech", "Instrumentos musicales y pedales guitar"
 ];
 
-const INITIAL_PAQUETES: Paquete[] = [
-  {
-    id: 'p-101',
-    codigoCasillero: 'AMEX-PER-1001',
-    numeroReciboBodega: 'WR-000451',
-    trackingUsa: '1Z9999999999999',
-    tipoEmpaque: 'CAJA',
-    numeroFactura: 'INV-8899',
-    dniConsignatario: '72819204',
-    nombreConsignatario: 'María Torres Pérez',
-    descripcion: 'Ropa y calzado deportivo Nike',
-    pesoKg: 4.5,
-    valorDeclaradoUsd: 149.99,
-    ubicacionActual: 'TibCourierMiami',
-    metodoEntrega: 'AgenciaProvincia',
-    estadoEntrega: 'EnAlmacen',
-    facturaPdfUrl: 'https://pub-dcb2789e802043768fa5c6c649f9c405.r2.dev/FOLDER%20AMEX/facturas/test_conexion.txt',
+const INITIAL_CLIENTES: Cliente[] = Array.from({ length: 105 }, (_, i) => {
+  const idx = i + 1;
+  const nombre = `${NOMBRES[i % NOMBRES.length]} ${APELLIDOS[i % APELLIDOS.length]} ${APELLIDOS[(i + 3) % APELLIDOS.length]}`;
+  const carrier = CARRIERS[i % CARRIERS.length];
+  const dist = DISTRITOS[i % DISTRITOS.length];
+  return {
+    id: `c-${idx}`,
+    codigoCasillero: `AMEX-PER-${1000 + idx}`,
+    nombre: nombre,
+    documentoIdentidad: `${70000000 + idx * 37}`,
+    telefono: `+51 98${Math.floor(100000 + (idx * 999) % 899999)}`,
+    email: `${NOMBRES[i % NOMBRES.length].toLowerCase()}.${APELLIDOS[i % APELLIDOS.length].toLowerCase()}${idx}@gmail.com`,
+    departamento: DEPARTAMENTOS[i % DEPARTAMENTOS.length],
+    provincia: PROVINCIAS[i % PROVINCIAS.length],
+    distrito: dist,
+    direccionEntrega: `Av. ${APELLIDOS[i % APELLIDOS.length]} #${100 + idx * 2}, ${dist}`,
+    transportistaPreferido: carrier,
+    agenciaDestino: carrier === 'CARRO AMEX' ? 'REPARTO DOMICILIO LINCE' : `${carrier} - ${dist}`,
+    dniFrontalUrl: DNI_FRONT_URL,
+    dniReversoUrl: DNI_BACK_URL,
+    creadoEn: '2026-08-01T10:00:00Z'
+  };
+});
+
+const INITIAL_PAQUETES: Paquete[] = Array.from({ length: 105 }, (_, i) => {
+  const idx = i + 1;
+  const cli = INITIAL_CLIENTES[i];
+  const ubicacion = i % 3 === 0 ? 'TibCourierMiami' : (i % 3 === 1 ? 'TibTingoMaria' : 'AmexLince');
+  const estado = i % 2 === 0 ? 'EnAlmacen' : 'EnRutaCarroAmex';
+  return {
+    id: `p-${idx}`,
+    codigoCasillero: cli.codigoCasillero,
+    numeroReciboBodega: `WR-000${100 + idx}`,
+    trackingUsa: `1Z999${Math.floor(100000000 + (idx * 8888) % 899999999)}`,
+    tipoEmpaque: i % 4 === 0 ? 'SOBRE' : 'CAJA',
+    numeroFactura: `INV-${9000 + idx}`,
+    dniConsignatario: cli.documentoIdentidad,
+    nombreConsignatario: cli.nombre,
+    descripcion: PRODUCTOS[i % PRODUCTOS.length],
+    pesoKg: Number((0.5 + (idx % 10) * 0.9).toFixed(1)),
+    valorDeclaradoUsd: Number((25.0 + (idx % 15) * 11.5).toFixed(2)),
+    ubicacionActual: ubicacion as any,
+    metodoEntrega: cli.transportistaPreferido === 'CARRO AMEX' ? 'CarroAmexDomicilio' : 'AgenciaProvincia',
+    estadoEntrega: estado as any,
+    facturaPdfUrl: ORDER_PDF_URL,
     creadoEn: '2026-08-01T11:00:00Z'
-  },
-  {
-    id: 'p-102',
-    codigoCasillero: 'AMEX-PER-1002',
-    numeroReciboBodega: 'WR-000452',
-    trackingUsa: '940010000000000000',
-    tipoEmpaque: 'SOBRE',
-    numeroFactura: 'INV-9021',
-    dniConsignatario: '10452399121',
-    nombreConsignatario: 'Carlos Mendoza Ramos',
-    descripcion: 'Componentes electrónicos e impresos',
-    pesoKg: 1.2,
-    valorDeclaradoUsd: 85.0,
-    ubicacionActual: 'AmexLince',
-    metodoEntrega: 'CarroAmexDomicilio',
-    estadoEntrega: 'EnRutaCarroAmex',
-    facturaPdfUrl: 'https://pub-dcb2789e802043768fa5c6c649f9c405.r2.dev/FOLDER%20AMEX/facturas/test_conexion.txt',
-    creadoEn: '2026-08-01T11:20:00Z'
-  }
-];
+  };
+});
 
 export default function DashboardPage() {
   const [activeTab, setActiveTab] = useState<string>('dashboard');
