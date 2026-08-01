@@ -51,20 +51,13 @@ export default function MobileScannerModal({ isOpen, onClose, onScan, isInline =
   const startCamera = async () => {
     try {
       if (!scannerRef.current) {
-        const only1DBarcodeFormats = [
-          Html5QrcodeSupportedFormats.CODE_128,
-          Html5QrcodeSupportedFormats.CODE_39,
-          Html5QrcodeSupportedFormats.CODE_93,
-          Html5QrcodeSupportedFormats.EAN_13,
-          Html5QrcodeSupportedFormats.EAN_8,
-          Html5QrcodeSupportedFormats.UPC_A,
-          Html5QrcodeSupportedFormats.UPC_E,
-          Html5QrcodeSupportedFormats.ITF,
-          Html5QrcodeSupportedFormats.CODABAR
+        // EXCLUSIVO PARA CÓDIGOS DE BARRAS CODE_128 (MÁXIMA PRECISIÓN LOGÍSTICA DE ENVÍOS)
+        const onlyCode128 = [
+          Html5QrcodeSupportedFormats.CODE_128
         ];
 
         scannerRef.current = new Html5Qrcode('qr-reader-viewport', {
-          formatsToSupport: only1DBarcodeFormats,
+          formatsToSupport: onlyCode128,
           verbose: false
         });
       }
@@ -194,9 +187,9 @@ export default function MobileScannerModal({ isOpen, onClose, onScan, isInline =
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
         <div>
           <h3 style={{ fontSize: '15px', fontWeight: 800, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <i className="fa-solid fa-barcode" style={{ color: '#2563eb' }}></i> Lector de Códigos de Barras HD (Cámara Trasera)
+            <i className="fa-solid fa-barcode" style={{ color: '#2563eb' }}></i> Escáner Exclusivo CODE_128 (Precisión Logística)
           </h3>
-          <p style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>Alinee el láser rojo horizontal sobre el código de barras</p>
+          <p style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>Filtro de lectura de alta precisión para rótulos y guías `AMX...`</p>
         </div>
         {!isInline && (
           <button onClick={() => { stopCamera(); onClose(); }} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '18px' }}>✕</button>
@@ -265,7 +258,7 @@ export default function MobileScannerModal({ isOpen, onClose, onScan, isInline =
                 gap: '6px'
               }}
             >
-              <Zap className="w-3.5 h-3.5 text-amber-400" /> Apunte la línea láser roja sobre las barras
+              <Zap className="w-3.5 h-3.5 text-amber-400" /> Lectura Exclusiva CODE_128 Activada
             </div>
           </div>
         )}
@@ -273,8 +266,8 @@ export default function MobileScannerModal({ isOpen, onClose, onScan, isInline =
         {!isScanning && (
           <div style={{ textAlign: 'center', padding: '36px 16px', color: '#94a3b8' }}>
             <i className="fa-solid fa-camera" style={{ fontSize: '42px', color: '#2563eb', marginBottom: '14px' }}></i>
-            <p style={{ fontWeight: 800, color: '#0f172a', fontSize: '15px', margin: 0 }}>Cámara Trasera en Espera</p>
-            <p style={{ fontSize: '12px', color: '#64748b', marginTop: '6px' }}>Presione el botón inferior para encender el sensor y el láser</p>
+            <p style={{ fontWeight: 800, color: '#0f172a', fontSize: '15px', margin: 0 }}>Cámara Trasera CODE_128 en Espera</p>
+            <p style={{ fontSize: '12px', color: '#64748b', marginTop: '6px' }}>Presione el botón inferior para encender la lectura de alta precisión</p>
           </div>
         )}
       </div>
@@ -287,7 +280,7 @@ export default function MobileScannerModal({ isOpen, onClose, onScan, isInline =
             className="btn btn-primary"
             style={{ flex: 1, height: '44px', justifyContent: 'center', fontSize: '13px', borderRadius: '10px' }}
           >
-            <i className="fa-solid fa-camera"></i> Activar Cámara Trasera
+            <i className="fa-solid fa-camera"></i> Activar Lector Exclusivo CODE_128
           </button>
         ) : (
           <button
@@ -323,7 +316,7 @@ export default function MobileScannerModal({ isOpen, onClose, onScan, isInline =
       {scanHistory.length > 0 && (
         <div style={{ marginTop: '16px', paddingTop: '14px', borderTop: '1px solid #e2e8f0' }}>
           <h4 style={{ fontSize: '11.5px', fontWeight: 800, color: '#475569', textTransform: 'uppercase', marginBottom: '8px' }}>
-            Últimos Códigos Leídos con Láser
+            Últimos Códigos CODE_128 Leídos
           </h4>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
             {scanHistory.map(item => (
