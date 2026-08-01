@@ -1,6 +1,4 @@
 {
   "version": 2,
-  "buildCommand": "cd amex-courier-erp && npm run build",
-  "outputDirectory": "amex-courier-erp/.next",
   "framework": "nextjs"
 }
