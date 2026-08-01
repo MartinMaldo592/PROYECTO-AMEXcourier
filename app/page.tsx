@@ -356,7 +356,7 @@ export default function DashboardPage() {
                 <div className={`nav-item ${activeTab === 'mm-lince' ? 'active' : ''}`} onClick={() => setActiveTab('mm-lince')}>
                   <div className="nav-item-left"><i className="fa-solid fa-store"></i> 3. Almacén Sede Lince</div>
                 </div>
-                <div className={`nav-item ${activeTab === 'mobile-scanner' ? 'active' : ''}`} onClick={() => setIsScannerOpen(true)}>
+                <div className={`nav-item ${activeTab === 'mobile-scanner' ? 'active' : ''}`} onClick={() => setActiveTab('mobile-scanner')}>
                   <div className="nav-item-left"><i className="fa-solid fa-barcode" style={{ color: '#38bdf8' }}></i> 📱 Escáner de Códigos de Barras</div>
                 </div>
               </div>
@@ -714,6 +714,21 @@ export default function DashboardPage() {
                   </table>
                 </div>
               </div>
+            </div>
+          )}
+
+          {/* TAB ESCÁNER DE CÓDIGOS DE BARRAS INLINE */}
+          {activeTab === 'mobile-scanner' && (
+            <div>
+              <div className="sap-breadcrumb">
+                <span>Operaciones y Almacenes</span> / <span>Escáner de Códigos de Barras</span>
+              </div>
+              <MobileScannerModal
+                isOpen={true}
+                isInline={true}
+                onClose={() => {}}
+                onScan={handleScanCode}
+              />
             </div>
           )}
         </main>

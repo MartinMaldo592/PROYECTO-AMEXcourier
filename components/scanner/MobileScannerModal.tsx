@@ -1,13 +1,14 @@
 'use client';
 
 import React, { useEffect, useState, useRef } from 'react';
-import { Camera, VideoOff, Barcode, Volume2, ShieldCheck, X, Copy, Check, Zap } from 'lucide-react';
+import { Camera, VideoOff, Barcode, Volume2, ShieldCheck, X, Copy, Check, RotateCcw } from 'lucide-react';
 import { Html5Qrcode, Html5QrcodeSupportedFormats, Html5QrcodeScannerState } from 'html5-qrcode';
 
 interface MobileScannerModalProps {
   isOpen: boolean;
   onClose: () => void;
   onScan: (decodedText: string, format: string) => void;
+  isInline?: boolean;
 }
 
 interface ScanLog {
@@ -17,16 +18,13 @@ interface ScanLog {
   time: string;
 }
 
-export default function MobileScannerModal({ isOpen, onClose, onScan }: MobileScannerModalProps) {
+export default function MobileScannerModal({ isOpen, onClose, onScan, isInline = false }: MobileScannerModalProps) {
   const [isScanning, setIsScanning] = useState(false);
-  const [cameras, setCameras] = useState<{ id: string; label: string }[]>([]);
+  const [backCameras, setBackCameras] = useState<{ id: string; label: string }[]>([]);
   const [selectedCamera, setSelectedCamera] = useState<string>('');
   const [scanHistory, setScanHistory] = useState<ScanLog[]>([]);
   const [copiedId, setCopiedId] = useState<string | null>(null);
-  const [useNativeGpu, setUseNativeGpu] = useState(false);
   const scannerRef = useRef<Html5Qrcode | null>(null);
-  const videoRef = useRef<HTMLVideoElement | null>(null);
-  const animationFrameRef = useRef<number | null>(null);
 
   const playScanBeep = () => {
     try {
@@ -34,31 +32,25 @@ export default function MobileScannerModal({ isOpen, onClose, onScan }: MobileSc
       const osc = audioCtx.createOscillator();
       const gain = audioCtx.createGain();
       osc.type = 'sine';
-      osc.frequency.setValueAtTime(1450, audioCtx.currentTime);
-      gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.15);
+      osc.frequency.setValueAtTime(1400, audioCtx.currentTime);
+      gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.12);
       osc.connect(gain);
       gain.connect(audioCtx.destination);
       osc.start();
-      osc.stop(audioCtx.currentTime + 0.15);
+      osc.stop(audioCtx.currentTime + 0.12);
     } catch {
       // Audio fallback
     }
 
     if (typeof navigator !== 'undefined' && navigator.vibrate) {
-      navigator.vibrate([100, 50, 100]);
+      navigator.vibrate([80, 40, 80]);
     }
   };
 
   const startCamera = async () => {
     try {
-      // Verificar si el navegador soporta la API nativa de deteccion por GPU (BarcodeDetector API)
-      if (typeof window !== 'undefined' && 'BarcodeDetector' in window) {
-        setUseNativeGpu(true);
-      }
-
       if (!scannerRef.current) {
-        // Matriz optimizada 1D de lectura ultrarrápida
         const only1DBarcodeFormats = [
           Html5QrcodeSupportedFormats.CODE_128,
           Html5QrcodeSupportedFormats.CODE_39,
@@ -82,19 +74,19 @@ export default function MobileScannerModal({ isOpen, onClose, onScan }: MobileSc
         return;
       }
 
-      // Configuración HD de video (1280x720 @ 30 FPS) para nitidez máxima en barras finas
       const config = {
         fps: 30,
         qrbox: (vfWidth: number, vfHeight: number) => {
           return {
-            width: Math.floor(vfWidth * 0.94),
-            height: Math.floor(vfHeight * 0.55)
+            width: Math.floor(vfWidth * 0.95),
+            height: Math.floor(vfHeight * 0.95)
           };
         },
-        aspectRatio: 1.777778, // 16:9 HD
+        aspectRatio: 1.777778,
         videoConstraints: {
-          width: { ideal: 1280 },
-          height: { ideal: 720 },
+          facingMode: { ideal: "environment" },
+          width: { ideal: 1920, min: 1280 },
+          height: { ideal: 1080, min: 720 },
           frameRate: { ideal: 30 },
           focusMode: "continuous"
         },
@@ -115,32 +107,46 @@ export default function MobileScannerModal({ isOpen, onClose, onScan }: MobileSc
             format: formatName,
             time: new Date().toLocaleTimeString()
           },
-          ...prev.filter(item => item.code !== decodedText).slice(0, 4)
+          ...prev.filter(item => item.code !== decodedText).slice(0, 5)
         ]);
       };
 
       try {
         const devices = await Html5Qrcode.getCameras();
         if (devices && devices.length > 0) {
-          setCameras(devices);
-          const backCam = devices.find(
-            c => c.label.toLowerCase().includes('back') || c.label.toLowerCase().includes('trasera') || c.label.toLowerCase().includes('environment')
-          );
-          const camId = backCam ? backCam.id : devices[devices.length - 1].id;
-          setSelectedCamera(camId);
+          const rearOnly = devices.filter(d => {
+            const label = d.label.toLowerCase();
+            return !label.includes('front') && !label.includes('user') && !label.includes('selfie') && !label.includes('delantera');
+          });
 
-          await scannerRef.current.start(camId, config, onScanSuccess, () => {});
+          const activeList = rearOnly.length > 0 ? rearOnly : devices;
+          setBackCameras(activeList);
+
+          const selectedId = activeList[activeList.length - 1].id;
+          setSelectedCamera(selectedId);
+
+          await scannerRef.current.start(selectedId, config, onScanSuccess, () => {});
           setIsScanning(true);
           return;
         }
       } catch {
-        // Fallback facingMode
+        // Fallback
       }
 
-      await scannerRef.current.start({ facingMode: "environment" }, config, onScanSuccess, () => {});
+      await scannerRef.current.start({ facingMode: { exact: "environment" } }, config, onScanSuccess, () => {});
       setIsScanning(true);
     } catch (err) {
-      console.log('Error start camera:', err);
+      try {
+        if (scannerRef.current) {
+          await scannerRef.current.start({ facingMode: "environment" }, { fps: 30 }, (decodedText, result) => {
+            playScanBeep();
+            onScan(decodedText, result?.result?.format?.formatName || 'CODE_128');
+          }, () => {});
+          setIsScanning(true);
+        }
+      } catch (e) {
+        console.log('Error start camera:', e);
+      }
     }
   };
 
@@ -162,7 +168,7 @@ export default function MobileScannerModal({ isOpen, onClose, onScan }: MobileSc
     if (isOpen) {
       const timer = setTimeout(() => {
         if (isMounted) startCamera();
-      }, 250);
+      }, 200);
       return () => {
         isMounted = false;
         clearTimeout(timer);
@@ -183,164 +189,123 @@ export default function MobileScannerModal({ isOpen, onClose, onScan }: MobileSc
 
   if (!isOpen) return null;
 
-  return (
-    <div
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: 'rgba(15, 23, 42, 0.85)',
-        backdropFilter: 'blur(10px)',
-        WebkitBackdropFilter: 'blur(10px)',
-        zIndex: 2000,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '12px'
-      }}
-    >
-      {/* Inline Responsive Mobile Window */}
-      <div
-        style={{
-          backgroundColor: '#0f172a',
-          border: '1px solid #334155',
-          borderRadius: '16px',
-          width: '100%',
-          maxWidth: '480px',
-          maxHeight: '94vh',
-          boxShadow: '0 25px 50px -12px rgba(0,0,0,0.8)',
-          overflow: 'hidden',
-          display: 'flex',
-          flexDirection: 'column',
-          color: '#ffffff'
-        }}
-      >
-        {/* Header Bar */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', backgroundColor: '#020617', borderBottom: '1px solid #1e293b' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'rgba(56,189,248,0.15)', border: '1px solid rgba(56,189,248,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Barcode className="w-5 h-5 text-sky-400" />
-            </div>
-            <div>
-              <h3 style={{ fontSize: '13.5px', fontWeight: 800, margin: 0, color: '#ffffff' }}>Escáner Ultrarrápido HD (CODE 128)</h3>
-              <p style={{ fontSize: '10px', color: '#34d399', fontFamily: 'JetBrains Mono', margin: 0, display: 'flex', alignItems: 'center', gap: '4px' }}>
-                <Zap className="w-3 h-3 text-amber-400" /> Aceleración GPU Hardware 720p HD @ 30 FPS
-              </p>
+  // Interfaz limpia e integrada en la misma página (Sin ventana flotante ruidosa)
+  const scannerBody = (
+    <div style={{ background: '#ffffff', borderRadius: '12px', border: '1px solid #e2e8f0', padding: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+        <div>
+          <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a' }}>
+            <i className="fa-solid fa-barcode" style={{ color: '#2563eb', marginRight: '8px' }}></i> Escáner de Códigos de Barras (Cámara Trasera 360°)
+          </h3>
+          <p style={{ fontSize: '13px', color: '#64748b', marginTop: '2px' }}>Detección de guías `AMX...` desde cualquier ángulo o inclinación</p>
+        </div>
+        {!isInline && (
+          <button onClick={() => { stopCamera(); onClose(); }} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '18px' }}>✕</button>
+        )}
+      </div>
+
+      {/* Camera View Box */}
+      <div style={{ position: 'relative', width: '100%', backgroundColor: '#020617', borderRadius: '12px', overflow: 'hidden', minHeight: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #cbd5e1' }}>
+        <div id="qr-reader-viewport" style={{ width: '100%' }}></div>
+
+        {/* Laser scan indicator */}
+        {isScanning && (
+          <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: '16px' }}>
+            <div style={{ width: '100%', height: '3px', background: 'linear-gradient(to right, transparent, #2563eb, #38bdf8, #2563eb, transparent)', boxShadow: '0 0 12px #2563eb' }}></div>
+            <div style={{ textAlign: 'center', fontSize: '11px', fontWeight: 700, color: '#ffffff', background: 'rgba(15, 23, 42, 0.85)', padding: '6px 12px', borderRadius: '6px' }}>
+              Pase la etiqueta o código de barras frente al visor
             </div>
           </div>
+        )}
+
+        {!isScanning && (
+          <div style={{ textAlign: 'center', padding: '32px', color: '#94a3b8' }}>
+            <i className="fa-solid fa-camera" style={{ fontSize: '36px', color: '#2563eb', marginBottom: '12px' }}></i>
+            <p style={{ fontWeight: 800, color: '#0f172a', fontSize: '14px', margin: 0 }}>Cámara en Espera</p>
+            <p style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>Presione el botón inferior para activar la cámara trasera</p>
+          </div>
+        )}
+      </div>
+
+      {/* Control Buttons */}
+      <div style={{ display: 'flex', gap: '10px', marginTop: '16px' }}>
+        {!isScanning ? (
           <button
-            onClick={() => {
-              stopCamera();
-              onClose();
-            }}
-            style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#1e293b', border: 'none', color: '#cbd5e1', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            onClick={startCamera}
+            className="btn btn-primary"
+            style={{ flex: 1, height: '44px', justifyContent: 'center', fontSize: '13px' }}
           >
-            <X className="w-5 h-5" />
+            <i className="fa-solid fa-camera"></i> Activar Cámara Trasera
           </button>
-        </div>
+        ) : (
+          <button
+            onClick={stopCamera}
+            className="btn btn-secondary"
+            style={{ flex: 1, height: '44px', justifyContent: 'center', fontSize: '13px', background: '#fee2e2', color: '#dc2626' }}
+          >
+            <i className="fa-solid fa-video-slash"></i> Apagar Cámara
+          </button>
+        )}
 
-        {/* Viewport Box */}
-        <div style={{ padding: '16px', overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          <div style={{ position: 'relative', width: '100%', backgroundColor: '#020617', borderRadius: '12px', overflow: 'hidden', minHeight: '250px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #1e293b' }}>
-            <div id="qr-reader-viewport" style={{ width: '100%' }}></div>
+        {backCameras.length > 1 && (
+          <select
+            value={selectedCamera}
+            onChange={e => {
+              setSelectedCamera(e.target.value);
+              if (isScanning) {
+                stopCamera().then(startCamera);
+              }
+            }}
+            style={{ background: '#ffffff', border: '1px solid #cbd5e1', color: '#334155', fontSize: '12.5px', borderRadius: '6px', padding: '0 12px', height: '44px', fontWeight: 600 }}
+          >
+            {backCameras.map(cam => (
+              <option key={cam.id} value={cam.id}>
+                {cam.label || `Cámara ${cam.id}`}
+              </option>
+            ))}
+          </select>
+        )}
+      </div>
 
-            {/* Laser Line Effect */}
-            {isScanning && (
-              <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: '16px' }}>
-                <div style={{ width: '100%', height: '3px', background: 'linear-gradient(to right, transparent, #ef4444, #38bdf8, #ef4444, transparent)', boxShadow: '0 0 16px #ef4444' }}></div>
-                <div style={{ textAlign: 'center', fontSize: '10px', fontWeight: 700, color: '#7dd3fc', background: 'rgba(2, 6, 23, 0.85)', padding: '6px 12px', borderRadius: '6px', border: '1px solid rgba(56,189,248,0.3)' }}>
-                  Mantenga la cámara fija a 15-20cm del código `AMX...`
+      {/* History Log Table */}
+      {scanHistory.length > 0 && (
+        <div style={{ marginTop: '20px', paddingTop: '16px', borderTop: '1px solid #e2e8f0' }}>
+          <h4 style={{ fontSize: '12px', fontWeight: 800, color: '#475569', textTransform: 'uppercase', marginBottom: '10px' }}>
+            Últimos Códigos de Barras Leídos
+          </h4>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {scanHistory.map(item => (
+              <div
+                key={item.id}
+                style={{ padding: '10px 14px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '13px' }}
+              >
+                <div>
+                  <div style={{ fontFamily: 'JetBrains Mono', fontWeight: 800, color: '#2563eb' }}>{item.code}</div>
+                  <div style={{ fontSize: '11px', color: '#64748b' }}>{item.format} • {item.time}</div>
                 </div>
+                <button
+                  onClick={() => copyToClipboard(item.code, item.id)}
+                  className="btn btn-secondary"
+                  style={{ padding: '6px 12px', fontSize: '11px' }}
+                >
+                  {copiedId === item.id ? '¡Copiado!' : 'Copiar'}
+                </button>
               </div>
-            )}
-
-            {!isScanning && (
-              <div style={{ textAlign: 'center', padding: '24px', color: '#94a3b8' }}>
-                <Camera className="w-10 h-10 mx-auto text-sky-400 mb-2 opacity-80" />
-                <p style={{ fontWeight: 700, color: '#ffffff', fontSize: '13px', margin: 0 }}>Cámara HD en espera</p>
-                <p style={{ fontSize: '11px', color: '#94a3b8', marginTop: '4px' }}>
-                  Toca el botón para iniciar el motor de aceleración GPU
-                </p>
-              </div>
-            )}
+            ))}
           </div>
-
-          {/* Controls Bar Mobile */}
-          <div style={{ display: 'flex', gap: '8px' }}>
-            {!isScanning ? (
-              <button
-                onClick={startCamera}
-                style={{ flex: 1, minHeight: '44px', padding: '10px 16px', background: '#2563eb', color: '#ffffff', fontWeight: 700, fontSize: '13px', border: 'none', borderRadius: '10px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
-              >
-                <Camera className="w-4 h-4" /> Iniciar Escáner GPU HD
-              </button>
-            ) : (
-              <button
-                onClick={stopCamera}
-                style={{ flex: 1, minHeight: '44px', padding: '10px 16px', background: 'rgba(220, 38, 38, 0.2)', color: '#f87171', border: '1px solid rgba(239, 68, 68, 0.4)', fontWeight: 700, fontSize: '13px', borderRadius: '10px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
-              >
-                <VideoOff className="w-4 h-4" /> Apagar Cámara
-              </button>
-            )}
-
-            {cameras.length > 1 && (
-              <select
-                value={selectedCamera}
-                onChange={e => {
-                  setSelectedCamera(e.target.value);
-                  if (isScanning) {
-                    stopCamera().then(startCamera);
-                  }
-                }}
-                style={{ background: '#020617', border: '1px solid #1e293b', color: '#cbd5e1', fontSize: '12px', borderRadius: '10px', padding: '0 10px', minHeight: '44px' }}
-              >
-                {cameras.map(cam => (
-                  <option key={cam.id} value={cam.id}>
-                    {cam.label || `Cámara ${cam.id}`}
-                  </option>
-                ))}
-              </select>
-            )}
-          </div>
-
-          {/* Recent Scans History Log */}
-          {scanHistory.length > 0 && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <div style={{ fontSize: '11px', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span>Detección DSI Instantánea GPU</span>
-                <span style={{ color: '#34d399', fontSize: '10px', fontFamily: 'JetBrains Mono', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  <Volume2 className="w-3 h-3" /> BEEP ACTIVADO
-                </span>
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', maxHeight: '130px', overflowY: 'auto' }}>
-                {scanHistory.map(item => (
-                  <div
-                    key={item.id}
-                    style={{ padding: '8px 12px', background: '#020617', border: '1px solid #1e293b', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', fontSize: '12px' }}
-                  >
-                    <div style={{ minWidth: 0 }}>
-                      <div style={{ fontFamily: 'JetBrains Mono', fontWeight: 800, color: '#38bdf8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.code}</div>
-                      <div style={{ fontSize: '10px', color: '#64748b', display: 'flex', gap: '8px' }}>
-                        <span>{item.format}</span>
-                        <span>•</span>
-                        <span>{item.time}</span>
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => copyToClipboard(item.code, item.id)}
-                      style={{ padding: '8px', background: '#0f172a', border: '1px solid #1e293b', color: '#94a3b8', borderRadius: '6px', cursor: 'pointer', minWidth: '36px', minHeight: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                      title="Copiar código"
-                    >
-                      {copiedId === item.id ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
+      )}
+    </div>
+  );
+
+  if (isInline) {
+    return scannerBody;
+  }
+
+  return (
+    <div className="modal-overlay active">
+      <div className="modal-content" style={{ maxWidth: '560px' }}>
+        {scannerBody}
       </div>
     </div>
   );
