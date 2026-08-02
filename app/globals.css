@@ -421,6 +421,288 @@ tr:hover { background: #f8fafc !important; }
   flex-shrink: 0;
 }
 
+/* ─── MODAL REGISTRAR EN MIAMI (Ficha de Ingreso) ─────────────────────────── */
+.modal-content--pkg {
+  max-width: 900px;
+  background: #f8fafc;
+}
+
+.pkg-header {
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  padding: 18px 24px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  border-bottom: 3px solid #38bdf8;
+  flex-shrink: 0;
+}
+
+.pkg-header__icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: rgba(56, 189, 248, 0.12);
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  color: #38bdf8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.pkg-header__title { color: #ffffff; font-size: 16px; font-weight: 800; letter-spacing: 0.2px; }
+.pkg-header__sub { color: #94a3b8; font-size: 12px; margin-top: 3px; }
+
+.pkg-header__hub {
+  margin-left: auto;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  color: #38bdf8;
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  border-radius: 6px;
+  padding: 5px 10px;
+  text-transform: uppercase;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.pkg-close {
+  background: rgba(255, 255, 255, 0.08);
+  border: none;
+  color: #cbd5e1;
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background 0.15s, color 0.15s;
+}
+.pkg-close:hover { background: rgba(255, 255, 255, 0.18); color: #ffffff; }
+.pkg-close:focus-visible { outline: 2px solid #38bdf8; outline-offset: 2px; }
+
+.pkg-body { padding: 20px 24px; }
+
+.pkg-layout {
+  display: grid;
+  grid-template-columns: 1fr 280px;
+  gap: 20px;
+  align-items: start;
+}
+
+.pkg-section {
+  background: #ffffff;
+  border: 1px solid var(--sap-border);
+  border-radius: 8px;
+  padding: 16px 18px;
+  margin-bottom: 14px;
+}
+
+.pkg-section__title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: #475569;
+  margin-bottom: 14px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #f1f5f9;
+}
+.pkg-section__title i { color: #2563eb; width: 14px; text-align: center; }
+
+.pkg-field { margin-bottom: 12px; }
+.pkg-field:last-child { margin-bottom: 0; }
+
+.pkg-label {
+  display: block;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: #64748b;
+  margin-bottom: 6px;
+}
+
+.pkg-input,
+.pkg-select {
+  width: 100%;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  padding: 9px 12px;
+  font-size: 13.5px;
+  color: #0f172a;
+  background: #ffffff;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.pkg-input:hover, .pkg-select:hover { border-color: #94a3b8; }
+.pkg-input:focus, .pkg-select:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+.pkg-input:focus-visible, .pkg-select:focus-visible { outline: none; }
+
+.pkg-input--mono {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+}
+
+.pkg-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.pkg-grid--3 { grid-template-columns: repeat(3, 1fr); }
+.pkg-hint { font-size: 11px; color: #94a3b8; margin-top: 5px; }
+
+/* Ficha de ingreso (preview en vivo) */
+.pkg-preview { position: sticky; top: 0; }
+
+.pkg-preview__head {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: #475569;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.pkg-preview__head i { color: #38bdf8; }
+
+.pkg-receipt {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+
+.pkg-receipt__bar {
+  background: #0f172a;
+  padding: 11px 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+.pkg-receipt__brand { color: #ffffff; font-size: 11.5px; font-weight: 800; letter-spacing: 0.5px; }
+.pkg-receipt__origin { color: #38bdf8; font-size: 9px; font-family: 'JetBrains Mono', monospace; font-weight: 700; letter-spacing: 1px; white-space: nowrap; }
+
+.pkg-receipt__body { padding: 14px; }
+
+.pkg-receipt__wr {
+  text-align: center;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 16px;
+  font-weight: 700;
+  color: #0f172a;
+  padding: 8px 10px;
+  background: #f1f5f9;
+  border-radius: 6px;
+  letter-spacing: 1px;
+  margin-bottom: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pkg-receipt__row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+  padding: 5px 0;
+  font-size: 12px;
+  border-bottom: 1px dashed #e2e8f0;
+}
+.pkg-receipt__row:last-child { border-bottom: none; }
+.pkg-receipt__k { color: #64748b; font-size: 10px; text-transform: uppercase; letter-spacing: 0.4px; font-weight: 700; flex-shrink: 0; }
+.pkg-receipt__v { font-family: 'JetBrains Mono', monospace; font-weight: 700; color: #0f172a; font-size: 12px; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pkg-receipt__v--accent { color: #2563eb; }
+.pkg-receipt__v--empty { color: #cbd5e1; }
+
+.pkg-estimate {
+  margin-top: 10px;
+  background: linear-gradient(135deg, #0f172a, #1e293b);
+  border-radius: 8px;
+  padding: 13px 14px;
+  color: #ffffff;
+}
+.pkg-estimate__row { display: flex; justify-content: space-between; gap: 10px; font-size: 11.5px; padding: 3px 0; }
+.pkg-estimate__k { color: #94a3b8; }
+.pkg-estimate__v { font-family: 'JetBrains Mono', monospace; font-weight: 700; }
+.pkg-estimate__total {
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+  margin-top: 6px;
+  padding-top: 8px;
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 13px;
+  font-weight: 800;
+}
+.pkg-estimate__total .pkg-estimate__v { color: #38bdf8; font-size: 14px; }
+
+.pkg-footer {
+  padding: 14px 24px;
+  background: #f8fafc;
+  border-top: 1px solid var(--sap-border);
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.pkg-submit {
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+}
+.pkg-submit:hover { box-shadow: 0 6px 16px rgba(37, 99, 235, 0.4); }
+
+/* ─── Utilidades para celdas de tabla ─────────────────────────── */
+.cell-casillero { font-family: 'JetBrains Mono', monospace; font-weight: 800; color: #9333ea; }
+.cell-casillero-blue { font-family: 'JetBrains Mono', monospace; font-weight: 800; color: #2563eb; }
+.cell-mono { font-family: 'JetBrains Mono', monospace; }
+.cell-bold { font-weight: 700; }
+.cell-fw600 { font-weight: 600; }
+.cell-muted { color: #94a3b8; }
+.cell-grey { color: #94a3b8; }
+.cell-center { text-align: center; }
+
+/* ─── Título de panel ─────────────────────────────────────────── */
+.panel-title {
+  padding: 16px 20px;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.panel-title h3 { font-size: 15px; font-weight: 800; margin: 0; }
+.panel-count {
+  background: #d1fae5;
+  color: #047857;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+@media (max-width: 820px) {
+  .pkg-layout { grid-template-columns: 1fr; }
+  .pkg-preview { position: static; order: -1; }
+  .pkg-grid { grid-template-columns: 1fr; }
+  .pkg-grid--3 { grid-template-columns: 1fr 1fr; }
+  .pkg-header__hub { display: none; }
+}
+
 /* Mobile Responsive Optimizations */
 @media (max-width: 768px) {
   .sap-header {

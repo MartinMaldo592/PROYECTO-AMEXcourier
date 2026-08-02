@@ -1,14 +1,31 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { uploadFileToR2 } from '@/lib/r2/client';
+import { getSessionUser } from '@/lib/auth/session';
+
+const ALLOWED_FOLDERS = new Set(['facturas', 'dnis', 'fotos', 'documentos']);
+const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
 export async function POST(req: NextRequest) {
   try {
+    const user = await getSessionUser();
+    if (!user) {
+      return NextResponse.json({ error: 'No autorizado. Inicia sesión.' }, { status: 401 });
+    }
+
     const formData = await req.formData();
     const file = formData.get('file') as File | null;
-    const folder = (formData.get('folder') as string) || 'facturas';
+    const folder = ((formData.get('folder') as string) || 'facturas').replace(/^\/+|\/+$/g, '');
 
     if (!file) {
       return NextResponse.json({ error: 'No se envió ningún archivo.' }, { status: 400 });
+    }
+
+    if (file.size > MAX_FILE_SIZE) {
+      return NextResponse.json({ error: 'El archivo supera el límite de 10 MB.' }, { status: 400 });
+    }
+
+    if (!ALLOWED_FOLDERS.has(folder)) {
+      return NextResponse.json({ error: 'Carpeta de destino no permitida.' }, { status: 400 });
     }
 
     const arrayBuffer = await file.arrayBuffer();

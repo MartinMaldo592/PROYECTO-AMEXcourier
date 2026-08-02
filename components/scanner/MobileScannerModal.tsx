@@ -1,31 +1,21 @@
 'use client';
 
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { CheckCircle2, RotateCcw, Zap } from 'lucide-react';
 import { Html5Qrcode, Html5QrcodeSupportedFormats, Html5QrcodeScannerState } from 'html5-qrcode';
+import type { Html5QrcodeResult } from 'html5-qrcode';
 
 interface MobileScannerModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onScan: (decodedText: string, format: string) => void;
-  onConfirm?: (decodedText: string, format: string) => void;
+  onConfirm: (decodedText: string, format: string) => void;
   isInline?: boolean;
 }
 
-interface ScanLog {
-  id: string;
-  code: string;
-  format: string;
-  time: string;
-  confirmed: boolean;
-}
-
-export default function MobileScannerModal({ isOpen, onClose, onScan, onConfirm, isInline = false }: MobileScannerModalProps) {
+export default function MobileScannerModal({ isOpen, onClose, onConfirm, isInline = false }: MobileScannerModalProps) {
   const [isScanning, setIsScanning] = useState(false);
   const [backCameras, setBackCameras] = useState<{ id: string; label: string }[]>([]);
   const [selectedCamera, setSelectedCamera] = useState<string>('');
-  const [scanHistory, setScanHistory] = useState<ScanLog[]>([]);
-  const [copiedId, setCopiedId] = useState<string | null>(null);
   const [pendingScan, setPendingScan] = useState<{ code: string; format: string } | null>(null);
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const resumeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -50,6 +40,13 @@ export default function MobileScannerModal({ isOpen, onClose, onScan, onConfirm,
     if (typeof navigator !== 'undefined' && navigator.vibrate) {
       navigator.vibrate([90, 45, 90]);
     }
+  };
+
+  const handleDecoded = (decodedText: string, result?: Html5QrcodeResult) => {
+    playScanBeep();
+    const formatName = result?.result?.format?.formatName || 'CODE_128';
+    setPendingScan({ code: decodedText, format: formatName });
+    freezeScanner();
   };
 
   const freezeScanner = async () => {
@@ -121,15 +118,6 @@ export default function MobileScannerModal({ isOpen, onClose, onScan, onConfirm,
         }
       };
 
-      const onScanSuccess = (decodedText: string, result: any) => {
-        playScanBeep();
-        const formatName = result?.result?.format?.formatName || 'CODE_128';
-        onScan(decodedText, formatName);
-
-        setPendingScan({ code: decodedText, format: formatName });
-        freezeScanner();
-      };
-
       try {
         const devices = await Html5Qrcode.getCameras();
         if (devices && devices.length > 0) {
@@ -144,7 +132,7 @@ export default function MobileScannerModal({ isOpen, onClose, onScan, onConfirm,
           const selectedId = activeList[activeList.length - 1].id;
           setSelectedCamera(selectedId);
 
-          await scannerRef.current.start(selectedId, config, onScanSuccess, () => {});
+          await scannerRef.current.start(selectedId, config, handleDecoded, () => {});
           setIsScanning(true);
           return;
         }
@@ -152,15 +140,12 @@ export default function MobileScannerModal({ isOpen, onClose, onScan, onConfirm,
         // Fallback
       }
 
-      await scannerRef.current.start({ facingMode: { exact: "environment" } }, config, onScanSuccess, () => {});
+      await scannerRef.current.start({ facingMode: { exact: "environment" } }, config, handleDecoded, () => {});
       setIsScanning(true);
-    } catch (err) {
+    } catch {
       try {
         if (scannerRef.current) {
-          await scannerRef.current.start({ facingMode: "environment" }, { fps: 30 }, (decodedText, result) => {
-            playScanBeep();
-            onScan(decodedText, result?.result?.format?.formatName || 'CODE_128');
-          }, () => {});
+          await scannerRef.current.start({ facingMode: "environment" }, { fps: 30 }, handleDecoded, () => {});
           setIsScanning(true);
         }
       } catch (e) {
@@ -169,7 +154,7 @@ export default function MobileScannerModal({ isOpen, onClose, onScan, onConfirm,
     }
   };
 
-  const stopCamera = async () => {
+  const stopCamera = useCallback(async () => {
     if (scannerRef.current) {
       try {
         await scannerRef.current.stop().catch(() => {});
@@ -179,7 +164,7 @@ export default function MobileScannerModal({ isOpen, onClose, onScan, onConfirm,
         setIsScanning(false);
       }
     }
-  };
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -197,29 +182,12 @@ export default function MobileScannerModal({ isOpen, onClose, onScan, onConfirm,
     } else {
       stopCamera();
     }
-  }, [isOpen]);
-
-  const copyToClipboard = (text: string, id: string) => {
-    if (typeof navigator !== 'undefined' && navigator.clipboard) {
-      navigator.clipboard.writeText(text);
-      setCopiedId(id);
-      setTimeout(() => setCopiedId(null), 2000);
-    }
-  };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- la cámara solo debe iniciarse cuando cambia isOpen
+  }, [isOpen, stopCamera]);
 
   const handleConfirmScan = () => {
     if (!pendingScan) return;
-    onConfirm?.(pendingScan.code, pendingScan.format);
-    setScanHistory(prev => [
-      {
-        id: Math.random().toString(),
-        code: pendingScan.code,
-        format: pendingScan.format,
-        time: new Date().toLocaleTimeString(),
-        confirmed: true
-      },
-      ...prev.filter(item => item.code !== pendingScan.code).slice(0, 5)
-    ]);
+    onConfirm(pendingScan.code, pendingScan.format);
     setPendingScan(null);
     if (resumeTimerRef.current) clearTimeout(resumeTimerRef.current);
     resumeTimerRef.current = setTimeout(() => resumeScanner(), 300);
@@ -270,7 +238,7 @@ export default function MobileScannerModal({ isOpen, onClose, onScan, onConfirm,
         {/* CENTERED LASER BEAM LINE AND TARGET RETICLE */}
         {isScanning && (
           <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
-            
+
             {/* Horizontal Centered Red Laser Line */}
             <div
               style={{
@@ -409,40 +377,6 @@ export default function MobileScannerModal({ isOpen, onClose, onScan, onConfirm,
           </select>
         )}
       </div>
-
-      {/* History Log Table */}
-      {scanHistory.length > 0 && (
-        <div style={{ marginTop: '16px', paddingTop: '14px', borderTop: '1px solid #e2e8f0' }}>
-          <h4 style={{ fontSize: '11.5px', fontWeight: 800, color: '#475569', textTransform: 'uppercase', marginBottom: '8px' }}>
-            Últimos Códigos CODE_128 Leídos
-          </h4>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-            {scanHistory.map(item => (
-              <div
-                key={item.id}
-                style={{ padding: '8px 12px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '12.5px' }}
-              >
-                <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span style={{ fontFamily: 'JetBrains Mono', fontWeight: 800, color: '#2563eb' }}>{item.code}</span>
-                    {item.confirmed && (
-                      <span style={{ background: '#d1fae5', color: '#047857', fontSize: '9.5px', fontWeight: 800, padding: '2px 8px', borderRadius: '10px', textTransform: 'uppercase' }}>Confirmado</span>
-                    )}
-                  </div>
-                  <div style={{ fontSize: '10.5px', color: '#64748b' }}>{item.format} • {item.time}</div>
-                </div>
-                <button
-                  onClick={() => copyToClipboard(item.code, item.id)}
-                  className="btn btn-secondary"
-                  style={{ padding: '6px 10px', fontSize: '11px' }}
-                >
-                  {copiedId === item.id ? '¡Copiado!' : 'Copiar'}
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   );
 
