@@ -99,18 +99,18 @@ export default function MobileScannerModal({ isOpen, onClose, onConfirm, isInlin
       }
 
       const config = {
-        fps: 30,
+        fps: 15,
         qrbox: (vfWidth: number, vfHeight: number) => {
           return {
-            width: Math.floor(vfWidth * 0.96),
-            height: Math.floor(vfHeight * 0.96)
+            width: Math.floor(vfWidth * 0.6),
+            height: Math.floor(vfHeight * 0.25)
           };
         },
         videoConstraints: {
           facingMode: { ideal: "environment" },
-          width: { ideal: 1280 },
-          height: { ideal: 720 },
-          frameRate: { ideal: 30 },
+          width: { ideal: 640 },
+          height: { ideal: 480 },
+          frameRate: { ideal: 15 },
           focusMode: "continuous"
         },
         experimentalFeatures: {
@@ -145,7 +145,7 @@ export default function MobileScannerModal({ isOpen, onClose, onConfirm, isInlin
     } catch {
       try {
         if (scannerRef.current) {
-          await scannerRef.current.start({ facingMode: "environment" }, { fps: 30 }, handleDecoded, () => {});
+          await scannerRef.current.start({ facingMode: "environment" }, { fps: 15 }, handleDecoded, () => {});
           setIsScanning(true);
         }
       } catch (e) {
@@ -224,8 +224,8 @@ export default function MobileScannerModal({ isOpen, onClose, onConfirm, isInlin
           backgroundColor: '#020617',
           borderRadius: '12px',
           overflow: 'hidden',
-          minHeight: '340px',
-          maxHeight: '70vh',
+          minHeight: '220px',
+          maxHeight: '48vh',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -330,9 +330,9 @@ export default function MobileScannerModal({ isOpen, onClose, onConfirm, isInlin
         )}
 
         {!isScanning && !pendingScan && (
-          <div style={{ textAlign: 'center', padding: '36px 16px', color: '#94a3b8' }}>
-            <i className="fa-solid fa-camera" style={{ fontSize: '42px', color: '#2563eb', marginBottom: '14px' }}></i>
-            <p style={{ fontWeight: 800, color: '#0f172a', fontSize: '15px', margin: 0 }}>Cámara Trasera CODE_128 en Espera</p>
+          <div style={{ textAlign: 'center', padding: '24px 12px', color: '#94a3b8' }}>
+            <i className="fa-solid fa-camera" style={{ fontSize: '30px', color: '#2563eb', marginBottom: '12px' }}></i>
+            <p style={{ fontWeight: 800, color: '#0f172a', fontSize: '14px', margin: 0 }}>Cámara Trasera CODE_128 en Espera</p>
             <p style={{ fontSize: '12px', color: '#64748b', marginTop: '6px' }}>Presione el botón inferior para encender la lectura de alta precisión</p>
           </div>
         )}
