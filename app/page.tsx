@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Paquete, Cliente, TipoUbicacion, TipoMetodoEntrega, TipoEstadoEntrega } from '@/types';
 import { supabase } from '@/lib/supabase/client';
 import HeaderBar from '@/components/HeaderBar';
@@ -112,8 +112,15 @@ const EMPTY_PKG_FORM: NewPkgFormData = {
 };
 
 export default function DashboardPage() {
-  const [activeTab, setActiveTab] = useState<string>('dashboard');
+  const [activeTab, setActiveTabState] = useState<string>('dashboard');
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+
+  const setActiveTab = useCallback((tab: string) => {
+    setActiveTabState(tab);
+    if (typeof window !== 'undefined' && window.innerWidth <= 768) {
+      setIsSidebarCollapsed(true);
+    }
+  }, []);
   const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({
     clientes: false,
     almacenes: false,
