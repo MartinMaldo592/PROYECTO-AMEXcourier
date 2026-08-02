@@ -20,6 +20,8 @@ export default function MobileScannerModal({ isOpen, onClose, onConfirm, isInlin
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const resumeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const detectorMode: 'native' | 'zxing' = typeof window !== 'undefined' && 'BarcodeDetector' in window ? 'native' : 'zxing';
+
   const playScanBeep = () => {
     try {
       const audioCtx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
@@ -102,7 +104,7 @@ export default function MobileScannerModal({ isOpen, onClose, onConfirm, isInlin
 
       const config = useNative
         ? {
-            fps: 15,
+            fps: 30,
             qrbox: (vfWidth: number, vfHeight: number) => {
               return {
                 width: Math.floor(vfWidth * 0.85),
@@ -299,6 +301,33 @@ export default function MobileScannerModal({ isOpen, onClose, onConfirm, isInlin
               }}
             >
               <Zap className="w-3.5 h-3.5 text-amber-400" /> Lectura Exclusiva CODE_128 Activada
+            </div>
+
+            {/* Detector Mode Badge */}
+            <div
+              style={{
+                position: 'absolute',
+                top: '10px',
+                right: '10px',
+                zIndex: 20,
+                fontSize: '10px',
+                fontWeight: 800,
+                letterSpacing: '0.3px',
+                color: detectorMode === 'native' ? '#052e16' : '#450a0a',
+                background: detectorMode === 'native' ? 'rgba(187,247,208,0.9)' : 'rgba(254,202,202,0.9)',
+                padding: '4px 10px',
+                borderRadius: '12px',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.35)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '5px'
+              }}
+            >
+              <span style={{
+                width: '7px', height: '7px', borderRadius: '50%', background: detectorMode === 'native' ? '#16a34a' : '#dc2626',
+                display: 'inline-block', flexShrink: 0
+              }}></span>
+              Detector: {detectorMode === 'native' ? 'Nativo' : 'ZXing'}
             </div>
           </div>
         )}
