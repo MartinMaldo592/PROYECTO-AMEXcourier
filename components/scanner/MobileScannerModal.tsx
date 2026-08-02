@@ -98,25 +98,45 @@ export default function MobileScannerModal({ isOpen, onClose, onConfirm, isInlin
         return;
       }
 
-      const config = {
-        fps: 15,
-        qrbox: (vfWidth: number, vfHeight: number) => {
-          return {
-            width: Math.floor(vfWidth * 0.6),
-            height: Math.floor(vfHeight * 0.25)
+      const useNative = typeof window !== 'undefined' && 'BarcodeDetector' in window;
+
+      const config = useNative
+        ? {
+            fps: 15,
+            qrbox: (vfWidth: number, vfHeight: number) => {
+              return {
+                width: Math.floor(vfWidth * 0.85),
+                height: Math.floor(vfHeight * 0.4)
+              };
+            },
+            videoConstraints: {
+              facingMode: { ideal: "environment" },
+              width: { ideal: 1280 },
+              height: { ideal: 720 },
+              frameRate: { ideal: 30 },
+              focusMode: "continuous"
+            },
+            experimentalFeatures: {
+              useBarCodeDetectorIfSupported: true
+            }
+          }
+        : {
+            fps: 15,
+            qrbox: (vfWidth: number, vfHeight: number) => {
+              return {
+                width: Math.floor(vfWidth * 0.9),
+                height: Math.floor(vfHeight * 0.28)
+              };
+            },
+            videoConstraints: {
+              facingMode: { ideal: "environment" },
+              width: { ideal: 1280 },
+              height: { ideal: 720 },
+              frameRate: { ideal: 15 },
+              focusMode: "continuous"
+            },
+            experimentalFeatures: { useBarCodeDetectorIfSupported: false }
           };
-        },
-        videoConstraints: {
-          facingMode: { ideal: "environment" },
-          width: { ideal: 640 },
-          height: { ideal: 480 },
-          frameRate: { ideal: 15 },
-          focusMode: "continuous"
-        },
-        experimentalFeatures: {
-          useBarCodeDetectorIfSupported: true
-        }
-      };
 
       try {
         const devices = await Html5Qrcode.getCameras();
